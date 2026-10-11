@@ -88,6 +88,9 @@ code.path{font-family:var(--f-mono);font-size:11.5px;background:var(--bg);paddin
 .sp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sp>*{flex:0 0 auto}
 .sp .spName{flex:1 1 90px;width:auto}
+#replRows{display:flex;flex-direction:column;gap:8px}
+.rp .inp{flex:1 1 70px;width:auto;min-width:0}
+.rp .arrow{color:var(--muted)}
 .sp select.inp{width:auto}
 .sp::after{content:"";order:1;flex:0 0 100%;height:0;margin-top:-8px}
 .sp .avClear{order:2;margin:-4px 0 0 42px}
@@ -415,6 +418,15 @@ window.XC_FONTS='cdn';
             <div id="speakers"></div>
             <div class="mrow"><button type="button" class="btn" id="addSpeaker">+ 화자</button><span class="hint">동그라미를 누르면 프로필 그림을 넣을 수 있어요. ‘오른쪽’은 말풍선 모양에서 내 쪽에 놓여요.</span></div>
             <input type="file" id="avInput" accept="image/*" hidden>
+          </div>
+        </details>
+
+        <details class="cast" id="replBox">
+          <summary>글자 바꾸기<small id="replCount"></small></summary>
+          <div class="castBody">
+            <div id="replRows"></div>
+            <div class="mrow"><button type="button" class="btn" id="addRepl">+ 바꿀 말</button><label class="chk" for="replOn"><input type="checkbox" id="replOn"> 바꾸기 켜기</label></div>
+            <p class="hint">캐릭터 이름을 가릴 때 써요. 칸에 쓴 글은 그대로 두고, 미리보기와 저장되는 결과에서만 바뀌어요. 화자 이름, 머리말과 꼬리말, 파일 이름에도 적용돼요.</p>
           </div>
         </details>
 
@@ -964,6 +976,24 @@ let speakers = [];   // {id, name, side:'l'|'r', color, avatar}
 let blocks = [];     // {id, type:'text', sp, text} | {id, type:'hr'} | {id, type:'pb'} | {id, type:'img', src, w}
 const head = {title:'', sub:'', foot:''};
 let isSample = false;
+/* words to swap in the output only (hiding a character's name, say); what is written in the boxes stays as it is */
+let repl = store.get('xc.repl', null);
+if (!repl || !Array.isArray(repl.rules)) repl = {on: true, rules: []};
+repl.on = repl.on !== false;
+repl.rules = repl.rules.filter(r => r && typeof r.a === 'string').slice(0, 60).map(r => ({a: r.a, b: typeof r.b === 'string' ? r.b : ''}));
+if (!repl.rules.length) repl.rules.push({a: '', b: ''});
+let rpRe = null, rpMap = new Map();
+function buildRepl(){
+  rpMap = new Map();
+  if (repl.on) for (const r of repl.rules){ const a = r.a.trim(); if (a && !rpMap.has(a)) rpMap.set(a, r.b); }
+  /* all the words are swapped in one pass, longest first, so one swap never feeds another */
+  rpRe = rpMap.size ? new RegExp([...rpMap.keys()].sort((x, y) => y.length - x.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g') : null;
+}
+buildRepl();
+const rp = t => rpRe && t ? String(t).replace(rpRe, m => rpMap.get(m)) : t;
+/* in a box: the words between tags are swapped; inside a tag only the texts a reader can meet (title, alt) are, so markup never breaks */
+const rpAttr = tag => tag.replace(/\b(title|alt|aria-label)(\s*=\s*)("[^"]*"|'[^']*')/gi, (m, k, eq, v) => k + eq + v[0] + rp(v.slice(1, -1)).replace(/"/g, '&quot;').replace(/'/g, '&#39;') + v[0]);
+const rpBody = t => rpRe ? t.replace(/<\/?[a-zA-Z][^<>]*>|[^<]+|</g, m => m[0] === '<' && m.length > 1 ? rpAttr(m) : rp(m)) : t;
 const undoStack = [];
 const spById = id => speakers.find(s => s.id === id) || null;
 
@@ -1035,6 +1065,35 @@ $('#speakers').addEventListener('change', e => {
   if (!e.target.matches('.spSide')) return;
   spById(e.target.closest('.sp').dataset.id).side = e.target.value; cache.clear(); changed();
 });
+function renderRepl(focusLast){
+  $('#replRows').innerHTML = repl.rules.map((r, i) => `<div class="sp rp" data-i="${i}"><input type="text" class="inp rpA" value="${esc(r.a)}" placeholder="찾을 말" aria-label="찾을 말"><span class="arrow" aria-hidden="true">→</span><input type="text" class="inp rpB" value="${esc(r.b)}" placeholder="바꿀 말 (비우면 지워요)" aria-label="바꿀 말"><button type="button" class="btn ghost rpDel" aria-label="이 줄 지우기">×</button></div>`).join('');
+  $('#replOn').checked = repl.on;
+  replCount();
+  if (focusLast){ const a = $$('#replRows .rpA').pop(); if (a) a.focus(); }
+}
+function replCount(){
+  const n = repl.rules.filter(r => r.a.trim()).length;
+  $('#replCount').textContent = !n ? '' : repl.on ? `${n}개 바꾸는 중` : `${n}개 · 꺼 둠`;
+}
+function replChanged(live){
+  buildRepl(); cache.clear(); store.set('xc.repl', repl); replCount();
+  if (live) renderSoon(); else renderPreview();
+}
+$('#replRows').addEventListener('input', e => {
+  const row = e.target.closest('.rp'); if (!row) return;
+  const r = repl.rules[+row.dataset.i]; if (!r) return;
+  if (e.target.classList.contains('rpA')) r.a = e.target.value; else if (e.target.classList.contains('rpB')) r.b = e.target.value;
+  replChanged(true);
+});
+$('#replRows').addEventListener('click', e => {
+  if (!e.target.closest('.rpDel')) return;
+  repl.rules.splice(+e.target.closest('.rp').dataset.i, 1);
+  if (!repl.rules.length) repl.rules.push({a: '', b: ''});
+  renderRepl(); replChanged();
+});
+$('#addRepl').addEventListener('click', () => { if (repl.rules.length < 60) repl.rules.push({a: '', b: ''}); renderRepl(true); });
+$('#replOn').addEventListener('change', e => { repl.on = e.target.checked; replChanged(); });
+renderRepl();
 $('#addSpeaker').addEventListener('click', () => {
   const sp = addSpeaker('', 'l'); renderSpeakers(); renderBlocks(); changed();
   const inp = $('#n' + sp.id); if (inp) inp.focus();
@@ -1272,6 +1331,7 @@ function renderMes(raw){
   s = s.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
   const me = speakers.find(x => x.side === 'r'), them = speakers.find(x => x.side === 'l');
   s = s.replace(/\{\{user\}\}/gi, me ? me.name : 'User').replace(/\{\{char\}\}/gi, them ? them.name : 'Character').trim();
+  s = rpBody(s);
   const libs = !!(window.showdown && window.DOMPurify);
   if (!(S.html && libs)) s = s.replace(/<\/?[a-zA-Z][^<>]*>/g, '');
   let html;
@@ -1357,9 +1417,9 @@ const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data
 const hasContent = () => blocks.some(b => (b.type === 'text' && b.text.trim()) || (b.type === 'img' && b.src));
 /* the flow as its pieces: head, the rows of the list, foot. The paged preview puts only the rows a page shows on that page. */
 function flowParts(){
-  const title = curTheme().bar ? '' : head.title;   // window themes show the title in their bar
+  const title = curTheme().bar ? '' : rp(head.title), sub = rp(head.sub);   // window themes show the title in their bar
   const items = [], P = {head: '', items, foot: ''};
-  if (title || head.sub) P.head = `<header class="xc-head xc-nb">${title ? `<h1 class="xc-title">${esc(title)}</h1>` : ''}${head.sub ? `<p class="xc-sub">${esc(head.sub)}</p>` : ''}</header>`;
+  if (title || sub) P.head = `<header class="xc-head xc-nb">${title ? `<h1 class="xc-title">${esc(title)}</h1>` : ''}${sub ? `<p class="xc-sub">${esc(sub)}</p>` : ''}</header>`;
   if (!hasContent()) items.push('<p class="xc-placeholder">칸에 글을 쓰면 여기에 나타나요.</p>');
   let prev = null, started = false, last = '';   // last: 'n' narration, 'd' dialogue, '' anything else
   for (const b of blocks){
@@ -1372,19 +1432,20 @@ function flowParts(){
     last = kind;
     if (!sp){ items.push(`<section class="xc-msg xc-narr${nd}"><div class="xc-main"><div class="xc-body">${renderMes(b.text)}</div></div></section>`); prev = null; continue; }
     const cont = S.group && prev === sp.id;
-    const meta = S.names && sp.name ? `<span class="xc-name"${S.nameColor ? ` style="color:${sp.color}"` : ''}>${esc(sp.name)}</span>` : '';
-    const av = S.avatars ? `<div class="xc-av xc-nb" style="background-color:${sp.color}${sp.avatar ? `;background-image:url('${sp.avatar}')` : ''}">${sp.avatar ? '' : esc([...(sp.name || '?')][0])}</div>` : '';
+    const nm = rp(sp.name);
+    const meta = S.names && nm ? `<span class="xc-name"${S.nameColor ? ` style="color:${sp.color}"` : ''}>${esc(nm)}</span>` : '';
+    const av = S.avatars ? `<div class="xc-av xc-nb" style="background-color:${sp.color}${sp.avatar ? `;background-image:url('${sp.avatar}')` : ''}">${sp.avatar ? '' : esc([...(nm || '?')][0])}</div>` : '';
     items.push(`<section class="xc-msg ${sp.side === 'r' ? 'xc-user' : 'xc-char'}${cont ? ' xc-cont' : ''}${nd}">${av}<div class="xc-main"><div class="xc-meta${meta ? '' : ' xc-meta-empty'}">${meta}</div><div class="xc-body${isDlg(b.text) ? ' xc-dlg' : ''}">${renderMes(b.text)}</div></div></section>`);
     prev = sp.id;
   }
-  if (head.foot) P.foot = `<footer class="xc-foot">${esc(head.foot)}</footer>`;
+  if (head.foot) P.foot = `<footer class="xc-foot">${esc(rp(head.foot))}</footer>`;
   return P;
 }
 const joinFlow = P => P.head + '<div class="xc-list">' + P.items.join('') + '</div>' + P.foot;
 const flowHTML = () => joinFlow(flowParts());
 const DOTS = '<span class="xc-dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>';
 function barHTML(){
-  const t = esc(head.title), th = S.theme;
+  const t = esc(rp(head.title)), th = S.theme;
   if (th === 'window' || th === 'terminal') return `<div class="xc-bar xc-nb">${DOTS}<span class="xc-url">${t}</span></div>`;
   if (th === 'winb') return `<div class="xc-nb"><div class="xc-tabs"><span class="xc-tab">${t || '새 탭'}</span><span class="xc-ctl"><i><b class="xc-mn"></b></i><i><b class="xc-mx"></b></i><i>×</i></span></div><div class="xc-addr"><span class="xc-nav">‹ ›</span><span class="xc-url">${t}</span></div></div>`;
   if (th === 'win98') return `<div class="xc-nb"><div class="xc-t98"><span>${t || '제목 없음'}</span><i><b class="xc-mn"></b></i><i><b class="xc-mx"></b></i><i>×</i></div><div class="xc-m98"><span>파일(F)</span><span>편집(E)</span><span>보기(V)</span><span>도움말(H)</span></div></div>`;
@@ -1888,7 +1949,7 @@ async function saveFile(filename, blob){
 }
 function baseName(){
   const used = speakers.find(s => s.side === 'l' && blocks.some(b => b.sp === s.id));
-  const d = new Date(), t = (head.title || (used || {}).name || '채팅').replace(/[\\/:*?"<>|\s]+/g, ' ').trim().slice(0, 40);
+  const d = new Date(), t = (rp(head.title || (used || {}).name || '') || '채팅').replace(/[\\/:*?"<>|\s]+/g, ' ').trim().slice(0, 40);
   return `발췌_${t}_${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}`;
 }
 function htmlFileString(){
@@ -1896,7 +1957,7 @@ function htmlFileString(){
   const used = [...new Set([S.font, fontDKey()])].map(k => FONTS[k]);
   const fontHead = used.filter(x => x.g).map(x => `${lt}link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${x.g}&display=swap">\n`).join('');
   const fontCss = used.filter(x => x.web).map(x => x.web.map(([u, w, fmt]) => `@font-face{font-family:'${x.family}';font-weight:${w};font-display:swap;src:url('${u}') format('${fmt}')}`).join('\n') + '\n').join('');
-  return `${dt}\n${lt}html lang="ko">\n${lt}head>\n${lt}meta charset="utf-8">\n${lt}meta name="viewport" content="width=device-width,initial-scale=1">\n${lt}title>${esc(head.title || '발췌')}${lt}/title>\n` +
+  return `${dt}\n${lt}html lang="ko">\n${lt}head>\n${lt}meta charset="utf-8">\n${lt}meta name="viewport" content="width=device-width,initial-scale=1">\n${lt}title>${esc(rp(head.title) || '발췌')}${lt}/title>\n` +
     `${fontHead}${lt}style>\n${fontCss}${SHEET_CSS}\n${HTML_FILE_CSS}\nbody{background:${isClear() ? 'transparent' : curTheme().frame ? S.desk : S.paper}}\n${lt}/style>\n${lt}/head>\n${lt}body>\n${sheetHTML()}\n${lt}/body>\n${lt}/html>\n`;
 }
 const skipInShot = n => n.id === 'app' || n.id === 'toast' || n.id === 'drop' || n.id === 'measureHost' || n.tagName === 'DIALOG';
