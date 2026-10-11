@@ -978,17 +978,20 @@ function ensureFont(key){
       /* next to the page first; on a plain website (window.XC_FONTS = 'cdn') the public address first */
       const web = f.web && f.web[n] ? f.web[n][0] : '';
       const from = (window.XC_FONTS === 'cdn' ? [web, path] : [path, web]).filter(Boolean);
-      let src = from[0];
+      let link = from[0], held = '';
       for (const u of from){
         try {
           const res = await fetch(u); if (!res.ok) throw new Error(res.status);
           const blob = await res.blob();
           const data = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(blob); });
-          src = String(data).replace(/^data:[^;,]*/, 'data:font/' + u.split('.').pop());
+          held = String(data).replace(/^data:[^;,]*/, 'data:font/' + u.split('.').pop()); link = u;
           break;
         } catch (e) {}
       }
-      return `@font-face{font-family:'${f.family}';font-weight:${weight};font-style:normal;font-display:swap;src:url(${src})}`;
+      /* two rules for the same face: the file by its address, then the file itself. The later one is used; if a browser
+         cannot take a font handed over this way, it falls back to the address, which is the ordinary way to load one. */
+      const face = src => `@font-face{font-family:'${f.family}';font-weight:${weight};font-style:normal;font-display:swap;src:url(${src})}`;
+      return face(`'${link}'`) + (held ? '\n' + face(held) : '');
     }));
     const st = document.createElement('style'); st.textContent = rules.join('\n');
     document.body.insertBefore(st, $('#app'));
@@ -1408,18 +1411,37 @@ function renderMes(raw){
 
 /* load the chosen fonts and say so if one does not arrive (a phone has none of them installed, so it shows) */
 let fontAsk = 0;
+/* is this family really drawing? Its text is measured against two plain fallbacks: a different width means the font is in use */
+function fontActive(fam){
+  const sp = document.createElement('span');
+  sp.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;font-size:72px;white-space:nowrap';
+  sp.textContent = 'mmmmmmmmlli 0123 .,"Ag';
+  document.body.appendChild(sp);
+  let on = false;
+  for (const base of ['monospace', 'serif']){
+    sp.style.fontFamily = base; const w0 = sp.offsetWidth;
+    sp.style.fontFamily = `'${fam}',${base}`;
+    if (sp.offsetWidth !== w0){ on = true; break; }
+  }
+  sp.remove();
+  return on;
+}
 async function fontsWanted(){
   const ask = ++fontAsk, keys = [...new Set([S.font, fontDKey()])];
   const got = await Promise.all(keys.map(async key => {
     const f = FONTS[key], fam = f.family || (/'([^']+)'/.exec(f.css) || [])[1];
-    try {
-      await ensureFont(key);
-      if (!(document.fonts && document.fonts.load) || !fam) return true;
-      return (await document.fonts.load(`16px '${fam}'`, '가A')).length > 0;
-    } catch (e) { return false; }
+    await ensureFont(key);
+    try { if (document.fonts && document.fonts.load) await document.fonts.load(`16px '${fam}'`, '가A1'); } catch (e) {}   // wait for it; whether it is in use is measured below
+    if (!fam) return true;
+    if (!fontActive(fam)){   // a second copy of the face may still be on its way: give it a few seconds
+      try { await document.fonts.ready; } catch (e) {}
+      for (let i = 0; i < 12 && !fontActive(fam); i++) await new Promise(r => setTimeout(r, 400));
+    }
+    return fontActive(fam);
   }));
   keys.forEach((k, i) => { if (!got[i]) fontLoads.delete(k); });   // so choosing it again tries again
   if (ask !== fontAsk) return;
+  renderPreview();   // draw again with the font in hand, whether or not the preview was on screen while it loaded
   const bad = keys.filter((k, i) => !got[i]);
   if (bad.length) toast(`${bad.map(k => FONTS[k].label).join(', ')} 글꼴을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 골라 주세요.`);
 }
@@ -1788,7 +1810,7 @@ function applySettings(obj, bg){
   for (const k of Object.keys(DEF)) if (obj && k in obj && typeof obj[k] === typeof DEF[k]) S[k] = obj[k];
   if (typeof bg === 'string'){ bgImage = /^data:image\//.test(bg) ? bg : ''; if (bgImage) store.set('xc.bg', bgImage); else store.del('xc.bg'); }
   sanitizeSettings(); store.set('xc.settings', S);
-  cache.clear(); syncControls(); ensureFont(S.font); ensureFont(fontDKey()); renderPreview();
+  cache.clear(); syncControls(); fontsWanted(); renderPreview();
 }
 $('#presetSave').addEventListener('click', () => {
   const name = $('#presetName').value.trim() || `설정 ${presets.length + 1}`;
@@ -2261,7 +2283,7 @@ $('#skinSel').addEventListener('change', e => {
 });
 ensureFont(uiFont());
 buildControls(); syncControls(); bindControls();
-ensureFont(S.font); ensureFont(fontDKey());
+fontsWanted();
 const draft = store.get('xc.draft', null);
 if (draft && Array.isArray(draft.blocks) && draft.blocks.length && Array.isArray(draft.speakers)){
   blocks = draft.blocks.filter(b => b && b.id && (b.type !== 'text' || typeof b.text === 'string'));
