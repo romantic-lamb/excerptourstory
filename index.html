@@ -13,7 +13,7 @@ body{margin:0;font-size:14px}
 img{max-width:100%}
 [hidden]{display:none!important}
 </style>
-<title>실리태번 발췌기</title>
+<title>발췌기</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Hahmlet:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Orbit&display=swap">
 <style>
 /* Layout: a cutting desk. You write or paste on the left; the excerpt lies on a cutting mat on the right, with crop marks at its corners and a dashed line wherever it will be cut into separate images. */
@@ -274,6 +274,34 @@ dialog[open]{display:flex;flex-direction:column}
 :root[data-skin="cat"] .seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
 :root[data-skin="cat"] .mat{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Cg transform='translate%2834 40%29 rotate%28-18%29' fill='%23a595b4'%3E%3Cellipse cx='0' cy='5' rx='7' ry='5.6'/%3E%3Ccircle cx='-8' cy='-3' r='2.9'/%3E%3Ccircle cx='-3' cy='-7.5' r='3'/%3E%3Ccircle cx='3' cy='-7.5' r='3'/%3E%3Ccircle cx='8' cy='-3' r='2.9'/%3E%3C/g%3E%3Cg transform='translate%28108 104%29 rotate%2822%29' fill='%23a595b4'%3E%3Cellipse cx='0' cy='5' rx='7' ry='5.6'/%3E%3Ccircle cx='-8' cy='-3' r='2.9'/%3E%3Ccircle cx='-3' cy='-7.5' r='3'/%3E%3Ccircle cx='3' cy='-7.5' r='3'/%3E%3Ccircle cx='8' cy='-3' r='2.9'/%3E%3C/g%3E%3C/svg%3E");background-size:150px 150px}
 
+/* 구름 양: a Santorini sky. Slate blue, sky blue, whitewash, sand and olive; a pixel typeface, hard edges, a pixel sheep by the title and pixel clouds on the mat */
+:root[data-skin="sheep"]{
+  --bg:#eceef1; --surface:#f8f7f7; --ink:#26354a; --muted:#566578; --line:#d6cfc4;
+  --accent:#4f6f96; --accent-ink:#fbfaf9; --mark:#cfe2f0; --danger:#a8443a;
+  --mat:#9dc3e0; --mat-ink:#26354a; --cut:#5c6b2e;
+  --mat-grid:transparent; --scrim:rgba(38,53,74,.45);
+  --f-display:'Galmuri11','DungGeunMo','Gulim',monospace;
+  --f-body:'Galmuri11','DungGeunMo','Gulim',monospace;
+  --f-mono:'Galmuri11','DungGeunMo','Gulim',monospace;
+  color-scheme:light;
+}
+:root[data-skin="sheep"] .deco{display:inline-block;align-self:center;width:38px;height:30px;image-rendering:pixelated;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 19 15' shape-rendering='crispEdges'%3E%3Crect x='2' y='3' width='12' height='9' fill='%2326354a'/%3E%3Crect x='3' y='2' width='10' height='1' fill='%2326354a'/%3E%3Crect x='1' y='5' width='1' height='5' fill='%2326354a'/%3E%3Crect x='11' y='3' width='7' height='7' fill='%2326354a'/%3E%3Crect x='12' y='2' width='4' height='1' fill='%2326354a'/%3E%3Crect x='4' y='11' width='3' height='3' fill='%2326354a'/%3E%3Crect x='10' y='11' width='3' height='3' fill='%2326354a'/%3E%3Crect x='3' y='4' width='10' height='7' fill='%23f5f3f4'/%3E%3Crect x='4' y='3' width='8' height='1' fill='%23f5f3f4'/%3E%3Crect x='2' y='6' width='1' height='3' fill='%23f5f3f4'/%3E%3Crect x='3' y='9' width='10' height='2' fill='%23d9dde3'/%3E%3Crect x='4' y='10' width='8' height='1' fill='%23f5f3f4'/%3E%3Crect x='12' y='4' width='5' height='5' fill='%23bfb4a3'/%3E%3Crect x='13' y='3' width='3' height='1' fill='%23f5f3f4'/%3E%3Crect x='12' y='3' width='1' height='1' fill='%23f5f3f4'/%3E%3Crect x='14' y='6' width='1' height='1' fill='%2326354a'/%3E%3Crect x='16' y='7' width='1' height='1' fill='%2326354a'/%3E%3Crect x='5' y='12' width='1' height='2' fill='%23bfb4a3'/%3E%3Crect x='11' y='12' width='1' height='2' fill='%23bfb4a3'/%3E%3Crect x='0' y='14' width='2' height='1' fill='%235c6b2e'/%3E%3Crect x='7' y='14' width='2' height='1' fill='%235c6b2e'/%3E%3Crect x='14' y='14' width='3' height='1' fill='%235c6b2e'/%3E%3Crect x='1' y='13' width='1' height='1' fill='%235c6b2e'/%3E%3Crect x='15' y='13' width='1' height='1' fill='%235c6b2e'/%3E%3Crect x='8' y='13' width='1' height='1' fill='%235c6b2e'/%3E%3C/svg%3E") center / contain no-repeat}
+:root[data-skin="sheep"] .top{background:#dfeaf3;border-bottom:2px solid #9dc3e0}
+:root[data-skin="sheep"] .top p{color:#45556a}
+:root[data-skin="sheep"] :is(.btn,.inp,.seg,.blk,.cast,.note,.sw,.btext,.spColor,.bthumb,.avBtn,.fmt){border-radius:0}
+:root[data-skin="sheep"] dialog{border-radius:0;border-width:2px}
+:root[data-skin="sheep"] #toast{border-radius:0;border:2px solid var(--ink)}
+:root[data-skin="sheep"] :is(#pasteText,#msgList){border-radius:0;border-width:2px}
+:root[data-skin="sheep"] .btn{border-width:2px;box-shadow:2px 2px 0 #bfb4a3}
+:root[data-skin="sheep"] .btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:none}
+:root[data-skin="sheep"] .btn.primary{background:#5c6b2e;border-color:#46531f;color:#fbfaf3;box-shadow:2px 2px 0 #26354a}
+:root[data-skin="sheep"] .btn.ghost{box-shadow:none}
+:root[data-skin="sheep"] :is(.inp,.blk,.cast,.seg){border-width:2px}
+:root[data-skin="sheep"] .inp{background:#eef0f2}
+:root[data-skin="sheep"] .tab{border-bottom-width:4px}
+:root[data-skin="sheep"] .seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
+:root[data-skin="sheep"] .mat{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='200' viewBox='0 0 260 200' shape-rendering='crispEdges'%3E%3Cg fill-opacity='.62'%3E%3Crect x='36' y='28' width='16' height='4' fill='%23f5f3f4'/%3E%3Crect x='28' y='32' width='32' height='4' fill='%23f5f3f4'/%3E%3Crect x='24' y='36' width='44' height='4' fill='%23f5f3f4'/%3E%3Crect x='28' y='40' width='36' height='4' fill='%23f5f3f4'/%3E%3Crect x='164' y='112' width='12' height='4' fill='%23f5f3f4'/%3E%3Crect x='156' y='116' width='28' height='4' fill='%23f5f3f4'/%3E%3Crect x='160' y='120' width='20' height='4' fill='%23f5f3f4'/%3E%3Crect x='100' y='168' width='8' height='4' fill='%23f5f3f4'/%3E%3Crect x='96' y='172' width='16' height='4' fill='%23f5f3f4'/%3E%3C/g%3E%3C/svg%3E");background-size:260px 200px}
+
 /* 초록 숲: warm off-white instead of white, olive and dark brown, and the mat is a real green cutting mat */
 :root[data-skin="nature"]{
   --bg:#e8e1db; --surface:#f3eee8; --ink:#362e23; --muted:#665f4c; --line:#d2c9bb;
@@ -318,10 +346,10 @@ dialog[open]{display:flex;flex-direction:column}
   --f-mono:'Galmuri11','DungGeunMo','Gulim',monospace;
   color-scheme:dark;
 }
-:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"]) body{font-size:12px;-webkit-font-smoothing:none}
-:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"]) :is(#app,dialog) :is(button,input,select,label,p,span,small,b,h2,h3,summary,output,code,li):not(#sheetHost *){font-size:12px}
-:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"]) .top h1{font-size:24px;letter-spacing:0;line-height:1}
-:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"]) :is(.btext,#pasteText){font-family:'Wanted Sans','Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:13.5px;-webkit-font-smoothing:auto}
+:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) body{font-size:12px;-webkit-font-smoothing:none}
+:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) :is(#app,dialog) :is(button,input,select,label,p,span,small,b,h2,h3,summary,output,code,li):not(#sheetHost *){font-size:12px}
+:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) .top h1{font-size:24px;letter-spacing:0;line-height:1}
+:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) :is(.btext,#pasteText){font-family:'Wanted Sans','Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:13.5px;-webkit-font-smoothing:auto}
 :root[data-skin="space"] .deco{display:inline-block;align-self:center;width:3px;height:3px;margin:0 10px 0 8px;background:#ffd866;box-shadow:3px 0 #ffd866,-3px 0 #ffd866,0 3px #ffd866,0 -3px #ffd866,6px 0 #8f7a3a,-6px 0 #8f7a3a,0 6px #8f7a3a,0 -6px #8f7a3a}
 :root[data-skin="space"] :is(.btn,.inp,.seg,.blk,.cast,.note,.sw,.btext,.spColor,.bthumb,.avBtn,.fmt){border-radius:0}
 :root[data-skin="space"] dialog{border-radius:0;border-width:2px}
@@ -345,7 +373,7 @@ dialog[open]{display:flex;flex-direction:column}
 </style>
 <script>
 window.XC_FONTS='cdn';
-(function(){var ok=['space','light','dark','cat','nature','lemon'],k='space';try{var v=localStorage.getItem('xc.skin');if(v)k=JSON.parse(v);}catch(e){}if(ok.indexOf(k)<0)k='space';document.documentElement.setAttribute('data-skin',k);})();
+(function(){var ok=['space','light','dark','cat','sheep','nature','lemon'],k='space';try{var v=localStorage.getItem('xc.skin');if(v)k=JSON.parse(v);}catch(e){}if(ok.indexOf(k)<0)k='space';document.documentElement.setAttribute('data-skin',k);})();
 </script>
 </head>
 <body>
@@ -363,6 +391,7 @@ window.XC_FONTS='cdn';
         <option value="light">심플 라이트</option>
         <option value="dark">심플 다크</option>
         <option value="cat">보라 고양이</option>
+        <option value="sheep">구름 양</option>
         <option value="nature">초록 숲</option>
         <option value="lemon">레몬에이드</option>
       </select>
@@ -654,9 +683,9 @@ const store = {
 const narrow = window.matchMedia('(max-width:860px)');
 /* screen theme of the tool itself (not of the excerpt); 픽셀 우주 unless another was chosen */
 let skin = store.get('xc.skin', 'space');
-if (!['space', 'light', 'dark', 'cat', 'nature', 'lemon'].includes(skin)) skin = 'space';
+if (!['space', 'light', 'dark', 'cat', 'sheep', 'nature', 'lemon'].includes(skin)) skin = 'space';
 document.documentElement.dataset.skin = skin;
-const uiFont = () => ['space', 'lemon', 'cat'].includes(skin) ? 'galmuri' : 'wanted';   // the tool's own typeface per screen theme
+const uiFont = () => ['space', 'lemon', 'cat', 'sheep'].includes(skin) ? 'galmuri' : 'wanted';   // the tool's own typeface per screen theme
 let uidN = 0;
 const uid = () => 'b' + Date.now().toString(36) + (uidN++).toString(36);
 
