@@ -180,16 +180,9 @@ code.path{font-family:var(--f-mono);font-size:11.5px;background:var(--bg);paddin
 .pgbox{position:relative;display:flow-root}
 .pgclip{overflow:hidden}
 .pgno{position:absolute;left:0;right:0;top:100%;height:var(--xc-pady);display:flex;align-items:center;justify-content:center;font:calc(var(--xc-size) * .72)/1 var(--xc-font);letter-spacing:0;color:var(--xc-muted)}
-/* on a phone the preview is its own tab, so the 꾸미기 tab carries a small live look at the top of the excerpt */
-.peekBox{display:none}
-#peek{height:32vh;min-height:150px;max-height:270px;overflow-x:hidden;overflow-y:auto;padding:12px 16px;background-color:var(--mat)}
-#peekWrap{position:relative;margin:0 auto;overflow:hidden}
-#peekHost{position:absolute;left:0;top:0;transform-origin:0 0}
-.peekBar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 6px 0 16px;border-bottom:1px solid var(--line)}
-.peekBar span{font-size:12px;color:var(--muted)}
 /* a transparent background shows as a checkerboard, light or dark so the text stays readable */
-#sheetWrap[data-clear="light"] .pg,#peekWrap[data-clear="light"] #peekHost{background:repeating-conic-gradient(#ffffff 0 25%,#e1e5e3 0 50%) 0 0 / 22px 22px}
-#sheetWrap[data-clear="dark"] .pg,#peekWrap[data-clear="dark"] #peekHost{background:repeating-conic-gradient(#3b403e 0 25%,#2f3432 0 50%) 0 0 / 22px 22px}
+#sheetWrap[data-clear="light"] .pg{background:repeating-conic-gradient(#ffffff 0 25%,#e1e5e3 0 50%) 0 0 / 22px 22px}
+#sheetWrap[data-clear="dark"] .pg{background:repeating-conic-gradient(#3b403e 0 25%,#2f3432 0 50%) 0 0 / 22px 22px}
 .crop{position:absolute;width:0;height:0}
 .crop::before,.crop::after{content:"";position:absolute;background:var(--mat-ink)}
 .crop::before{width:calc(14px / var(--k,1));height:calc(1px / var(--k,1))}
@@ -244,7 +237,6 @@ dialog[open]{display:flex;flex-direction:column}
   .work{display:flex;flex-direction:column}
   .tab-preview{display:block}
   .side{border-right:0;flex:1}
-  #app[data-tab="style"] .peekBox{display:block;flex:0 0 auto}
   #app:not([data-tab="preview"]) .preview{display:none}
   #app[data-tab="preview"] .side{flex:0 0 auto}
   #app[data-tab="preview"] .pane{display:none}
@@ -363,7 +355,7 @@ dialog[open]{display:flex;flex-direction:column}
   color-scheme:dark;
 }
 :root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) body{font-size:12px;-webkit-font-smoothing:none}
-:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) :is(#app,dialog) :is(button,input,select,label,p,span,small,b,h2,h3,summary,output,code,li):not(#sheetHost *):not(#peekHost *){font-size:12px}
+:root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) :is(#app,dialog) :is(button,input,select,label,p,span,small,b,h2,h3,summary,output,code,li):not(#sheetHost *){font-size:12px}
 :root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) .top h1{font-size:24px;letter-spacing:0;line-height:1}
 :root:is([data-skin="space"],[data-skin="lemon"],[data-skin="cat"],[data-skin="sheep"]) :is(.btext,#pasteText){font-family:'Wanted Sans','Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:13.5px;-webkit-font-smoothing:auto}
 :root[data-skin="space"] .deco{display:inline-block;align-self:center;width:3px;height:3px;margin:0 10px 0 8px;background:#ffd866;box-shadow:3px 0 #ffd866,-3px 0 #ffd866,0 3px #ffd866,0 -3px #ffd866,6px 0 #8f7a3a,-6px 0 #8f7a3a,0 6px #8f7a3a,0 -6px #8f7a3a}
@@ -420,10 +412,6 @@ window.XC_FONTS='cdn';
         <button type="button" class="tab" role="tab" data-tab="write" id="tabWrite" aria-controls="paneWrite" aria-selected="true">쓰기</button>
         <button type="button" class="tab" role="tab" data-tab="style" id="tabStyle" aria-controls="paneStyle" aria-selected="false">꾸미기</button>
         <button type="button" class="tab tab-preview" role="tab" data-tab="preview" id="tabPreview" aria-controls="panePreview" aria-selected="false">미리보기 · 저장</button>
-      </div>
-      <div class="peekBox">
-        <div id="peek" aria-label="미리보기 앞부분"><div id="peekWrap"><div id="peekHost"></div></div></div>
-        <div class="peekBar"><span id="peekNote">고치는 대로 여기에 바로 보여요 · 글의 앞부분</span><button type="button" class="btn ghost" id="peekToggle">접기</button></div>
       </div>
 
       <section class="pane" id="paneWrite" role="tabpanel" aria-labelledby="tabWrite">
@@ -1406,23 +1394,6 @@ function renderMes(raw){
   return html;
 }
 
-/* load the chosen fonts and say so if one does not arrive (a phone has none of them installed, so it shows) */
-let fontAsk = 0;
-async function fontsWanted(){
-  const ask = ++fontAsk, keys = [...new Set([S.font, fontDKey()])];
-  const got = await Promise.all(keys.map(async key => {
-    const f = FONTS[key], fam = f.family || (/'([^']+)'/.exec(f.css) || [])[1];
-    try {
-      await ensureFont(key);
-      if (!(document.fonts && document.fonts.load) || !fam) return true;
-      return (await document.fonts.load(`16px '${fam}'`, '가A')).length > 0;
-    } catch (e) { return false; }
-  }));
-  keys.forEach((k, i) => { if (!got[i]) fontLoads.delete(k); });   // so choosing it again tries again
-  if (ask !== fontAsk) return;
-  const bad = keys.filter((k, i) => !got[i]);
-  if (bad.length) toast(`${bad.map(k => FONTS[k].label).join(', ')} 글꼴을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 골라 주세요.`);
-}
 const curTheme = () => THEMES[S.theme];
 /* dialogue follows narration unless it is set apart */
 const dv = k => S.dOwn ? S[k + 'D'] : S[k];
@@ -1620,33 +1591,10 @@ function renderPreview(){
   host.innerHTML = html || pgHTML(sheetHTML());
   host.dataset.fix = html ? 1 : '';
   pageCount = n; lastMH = mh.offsetHeight;
-  updateExportUI(); fit(); renderPeek();
+  updateExportUI(); fit();
   lastCost = performance.now() - t0;
 }
 /* set each page's first row exactly where it sits in the strip (its own top margin moves it otherwise) */
-/* the small look on the 꾸미기 tab of a phone: the frame with the first rows of the flow, scaled to the screen */
-let peekOn = store.get('xc.peek', true) !== false;
-const peekShown = () => peekOn && narrow.matches && $('#app').dataset.tab === 'style';
-function peekFit(){
-  const box = $('#peek'), host = $('#peekHost');
-  if (!box.clientWidth || !host.firstElementChild) return;
-  const cs = getComputedStyle(box), k = Math.min(1, (box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) / S.width);
-  host.style.width = S.width + 'px'; host.style.transform = `scale(${k})`;
-  const wrap = $('#peekWrap'); wrap.style.width = S.width * k + 'px'; wrap.style.height = host.offsetHeight * k + 'px';
-  wrap.dataset.clear = $('#sheetWrap').dataset.clear || '';
-}
-function renderPeek(){
-  $('#peek').hidden = !peekOn;
-  $('#peekToggle').textContent = peekOn ? '접기' : '펴기';
-  $('#peekNote').textContent = peekOn ? '고치는 대로 여기에 바로 보여요 · 글의 앞부분' : '미리보기를 접어 뒀어요';
-  const host = $('#peekHost');
-  if (!peekShown()){ host.innerHTML = ''; return; }
-  const P = flowParts(), few = P.items.slice(0, 14);
-  host.innerHTML = sheetHTML('<div class="xc-flow">' + joinFlow({head: P.head, items: few, foot: few.length < P.items.length ? '' : P.foot}) + '</div>');
-  peekFit();
-}
-$('#peekToggle').addEventListener('click', () => { peekOn = !peekOn; store.set('xc.peek', peekOn); renderPeek(); });
-if (window.ResizeObserver){ const pr = new ResizeObserver(peekFit); pr.observe($('#peek')); pr.observe($('#peekHost')); }
 function fixPages(){
   const host = $('#sheetHost');
   if (!host.dataset.fix || !host.offsetWidth) return;
@@ -1731,7 +1679,7 @@ function bindControls(){
       store.set('xc.settings', S);
       if (k === 'quotes' || k === 'html' || k === 'paren') cache.clear();
       if (k === 'dOwn' && v && S.sizeD === DEF.sizeD && S.lsD === DEF.lsD && S.sxD === DEF.sxD){ S.sizeD = S.size; S.lsD = S.ls; S.sxD = S.sx; }   // start from the narration values
-      if (k === 'font' || k === 'fontD' || k === 'dOwn') fontsWanted();
+      if (k === 'font' || k === 'fontD' || k === 'dOwn'){ ensureFont(S.font); ensureFont(fontDKey()); }
       syncControls();
       if (live) renderSoon(); else renderPreview();
     });
@@ -2226,7 +2174,6 @@ function setTab(t){
   $('#app').dataset.tab = t;
   $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   if (t === 'preview') fit();
-  renderPeek();
   if (t === 'write') $$('#blocks textarea').forEach(grow);
 }
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
