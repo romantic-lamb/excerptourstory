@@ -586,7 +586,7 @@ window.XC_FONTS='cdn';
         </label>
         <label class="opt" id="optScale" for="sScale">선명도
           <select class="inp" id="sScale" data-s="scale" data-t="n">
-            <option value="1">1배</option><option value="2">2배</option><option value="3">3배</option>
+            <option value="1">1배</option><option value="2">2배</option><option value="3">3배</option><option value="4">4배</option>
           </select>
         </label>
         <label class="chk opt" id="optPageNo" for="kPageNo"><input type="checkbox" id="kPageNo" data-s="pageNo"> 쪽 번호</label>
@@ -918,7 +918,7 @@ function sanitizeSettings(){
   num('size', 13, 22); num('lh', 1.4, 2.2); num('ls', -8, 30); num('sx', 80, 120); num('cDim', 0, 100);
   num('sizeD', 13, 22); num('lsD', -8, 30); num('sxD', 80, 120); num('gm', 40, 250); num('gn', 0, 300);
   if (![480, 560, 640, 720, 860].includes(S.width)) S.width = DEF.width;
-  if (![1, 2, 3].includes(S.scale)) S.scale = DEF.scale;
+  if (![1, 2, 3, 4].includes(S.scale)) S.scale = DEF.scale;
   const tc = themeColors(S.theme);
   for (const k of [...COLOR_KEYS, 'hl']) if (!/^#[0-9a-f]{6}$/i.test(S[k])) S[k] = k === 'hl' ? DEF.hl : tc[k];
 }
