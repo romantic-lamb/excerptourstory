@@ -88,6 +88,7 @@ code.path{font-family:var(--f-mono);font-size:11.5px;background:var(--bg);paddin
 .sp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sp>*{flex:0 0 auto}
 .sp .spName{flex:1 1 90px;width:auto}
+#fontNote{margin:2px 0 10px;padding:8px 10px;border:1px dashed var(--danger);border-radius:6px;font-size:12.5px;line-height:1.6}
 #replRows{display:flex;flex-direction:column;gap:8px}
 .rp .inp{flex:1 1 70px;width:auto;min-width:0}
 .rp .arrow{color:var(--muted)}
@@ -503,6 +504,7 @@ window.XC_FONTS='cdn';
           <h2>글자와 크기</h2>
           <h3>지문</h3>
           <label class="field" for="sFont"><span>글꼴</span><select class="inp" id="sFont" data-s="font"></select></label>
+          <p id="fontNote" role="status" hidden>이 브라우저가 휴대폰에 설정한 글꼴을 웹페이지에 덮어쓰고 있어서, 여기서 고른 글꼴이 보이지 않아요. 삼성 인터넷이라면 <b>설정 → 실험실 → ‘기기 글꼴을 웹페이지에 사용’</b>을 끄거나, 크롬으로 열어 주세요.</p>
           <label class="field" for="sSize"><span>글자 크기</span><span class="rng"><input type="range" id="sSize" data-s="size" data-t="n" min="13" max="22" step="1"><output id="oSize" for="sSize"></output></span></label>
           <label class="field" for="sLs"><span>자간</span><span class="rng"><input type="range" id="sLs" data-s="ls" data-t="n" min="-8" max="30" step="1"><output id="oLs" for="sLs"></output></span></label>
           <label class="field" for="sSx"><span>장평</span><span class="rng"><input type="range" id="sSx" data-s="sx" data-t="n" min="80" max="120" step="1"><output id="oSx" for="sSx"></output></span></label>
@@ -1412,22 +1414,35 @@ function renderMes(raw){
 /* load the chosen fonts and say so if one does not arrive (a phone has none of them installed, so it shows) */
 let fontAsk = 0;
 /* is this family really drawing? Its text is measured against two plain fallbacks: a different width means the font is in use */
-function fontActive(fam){
+function fontWidths(families){
   const sp = document.createElement('span');
   sp.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;font-size:72px;white-space:nowrap';
   sp.textContent = 'mmmmmmmmlli 0123 .,"Ag';
   document.body.appendChild(sp);
-  let on = false;
-  for (const base of ['monospace', 'serif']){
-    sp.style.fontFamily = base; const w0 = sp.offsetWidth;
-    sp.style.fontFamily = `'${fam}',${base}`;
-    if (sp.offsetWidth !== w0){ on = true; break; }
-  }
+  const w = families.map(f => { sp.style.fontFamily = f; return sp.offsetWidth; });
   sp.remove();
-  return on;
+  return w;
 }
+function fontActive(fam){
+  const w = fontWidths(['monospace', `'${fam}',monospace`, 'serif', `'${fam}',serif`]);
+  return w[0] !== w[1] || w[2] !== w[3];
+}
+/* some phone browsers can be set to draw every page in the phone's own font (Samsung Internet: 기기 글꼴을 웹페이지에 사용).
+   Then even the three plain families come out the same width, and no font chosen here can show. */
+function fontsForced(){
+  const w = fontWidths(['monospace', 'serif', 'sans-serif']);
+  return w[0] > 0 && w[0] === w[1] && w[1] === w[2];
+}
+let forcedTold = false;
 async function fontsWanted(){
   const ask = ++fontAsk, keys = [...new Set([S.font, fontDKey()])];
+  const forced = fontsForced();
+  $('#fontNote').hidden = !forced;
+  if (forced){
+    keys.forEach(k => ensureFont(k));   // still fetched: the saved image may be able to use them
+    if (!forcedTold){ forcedTold = true; toast('이 브라우저가 휴대폰 글꼴을 덮어써서 고른 글꼴이 안 보여요. 꾸미기의 글꼴 아래 안내를 봐 주세요.'); }
+    return;
+  }
   const got = await Promise.all(keys.map(async key => {
     const f = FONTS[key], fam = f.family || (/'([^']+)'/.exec(f.css) || [])[1];
     await ensureFont(key);
