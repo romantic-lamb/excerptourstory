@@ -180,7 +180,7 @@ code.path{font-family:var(--f-mono);font-size:11.5px;background:var(--bg);paddin
 .pg[data-n]::before{content:attr(data-n);position:absolute;left:0;right:0;bottom:100%;padding-bottom:calc(9px / var(--k,1));text-align:center;font:500 calc(11px / var(--k,1))/1 var(--f-mono);color:var(--mat-ink);pointer-events:none}
 .pgbox{position:relative;display:flow-root}
 .pgclip{overflow:hidden}
-.pgno{position:absolute;left:0;right:0;top:100%;height:var(--xc-pady);display:flex;align-items:center;justify-content:center;font:calc(var(--xc-size) * .72)/1 var(--xc-font);letter-spacing:0;color:var(--xc-muted)}
+.pgno{position:absolute;left:0;right:0;top:100%;height:var(--xc-padb);display:flex;align-items:center;justify-content:center;font:calc(var(--xc-size) * .72)/1 var(--xc-font);letter-spacing:0;color:var(--xc-muted)}
 /* on a phone the preview is its own tab, so the 꾸미기 tab carries a small live look at the top of the excerpt */
 .peekBox{display:none}
 #peek{height:32vh;min-height:150px;max-height:270px;overflow-x:hidden;overflow-y:auto;padding:12px 16px;background-color:var(--mat)}
@@ -529,6 +529,18 @@ window.XC_FONTS='cdn';
           <label class="field" for="sLh"><span>줄 간격</span><span class="rng"><input type="range" id="sLh" data-s="lh" data-t="n" min="1.4" max="2.2" step="0.05"><output id="oLh" for="sLh"></output></span></label>
           <label class="field" for="sGm"><span>칸 사이</span><span class="rng"><input type="range" id="sGm" data-s="gm" data-t="n" min="40" max="250" step="10"><output id="oGm" for="sGm"></output></span></label>
           <label class="field" for="sGn"><span>지문·대사 사이</span><span class="rng"><input type="range" id="sGn" data-s="gn" data-t="n" min="0" max="300" step="10"><output id="oGn" for="sGn"></output></span></label>
+          <h3>여백</h3>
+          <label class="chk" for="kPadOwn"><input type="checkbox" id="kPadOwn" data-s="padOwn"> 여백 직접 정하기</label>
+          <div class="subgrp" id="padBox">
+            <label class="field" for="sPadT"><span>위</span><span class="rng"><input type="range" id="sPadT" data-s="padT" data-t="n" min="0" max="160" step="2"><output id="oPadT" for="sPadT"></output></span></label>
+            <label class="field" for="sPadB"><span>아래</span><span class="rng"><input type="range" id="sPadB" data-s="padB" data-t="n" min="0" max="160" step="2"><output id="oPadB" for="sPadB"></output></span></label>
+            <label class="field" for="sPadL"><span>왼쪽</span><span class="rng"><input type="range" id="sPadL" data-s="padL" data-t="n" min="0" max="160" step="2"><output id="oPadL" for="sPadL"></output></span></label>
+            <label class="field" for="sPadR"><span>오른쪽</span><span class="rng"><input type="range" id="sPadR" data-s="padR" data-t="n" min="0" max="160" step="2"><output id="oPadR" for="sPadR"></output></span></label>
+            <div id="padOBox">
+            <label class="field" for="sPadO"><span>창 바깥</span><span class="rng"><input type="range" id="sPadO" data-s="padO" data-t="n" min="0" max="120" step="2"><output id="oPadO" for="sPadO"></output></span></label>
+            </div>
+            <p class="hint">위·아래·왼쪽·오른쪽은 글과 테두리 사이예요. 끄면 모양마다 정해진 여백으로 돌아가요.</p>
+          </div>
           <label class="field" for="sWidth"><span>폭</span><select class="inp" id="sWidth" data-s="width" data-t="n">
             <option value="480">480px · 휴대폰 화면처럼 좁게</option>
             <option value="560">560px</option>
@@ -737,7 +749,7 @@ const SHEET_CSS = `
 .xc{--xc-gap0:1.5em;--xc-gap:calc(var(--xc-gap0) * var(--xc-gm));--xc-gapnd:calc(var(--xc-gap0) * var(--xc-gm) * var(--xc-gn));box-sizing:border-box;width:var(--xc-w);padding:var(--xc-fpad);background:var(--xc-desk);color:var(--xc-ink);font-family:var(--xc-font);font-size:var(--xc-size);line-height:var(--xc-lh);letter-spacing:var(--xc-ls);word-break:keep-all;overflow-wrap:anywhere;text-align:left;-webkit-text-size-adjust:100%}
 .xc *,.xc *::before,.xc *::after{box-sizing:border-box}
 .xc-win{background:var(--xc-winbg)}
-.xc-slot{padding:var(--xc-pady) var(--xc-padx)}
+.xc-slot{padding:var(--xc-padt) var(--xc-padr) var(--xc-padb) var(--xc-padl)}
 .xc-head{margin:0 0 2em;padding:0 0 1.1em;border-bottom:1px solid var(--xc-line)}
 .xc-title{margin:0;font-size:1.45em;line-height:1.3;font-weight:700;letter-spacing:-.01em}
 .xc-sub{margin:.35em 0 0;font-size:.82em;color:var(--xc-muted)}
@@ -887,7 +899,7 @@ const SHEET_CSS = `
 const HTML_FILE_CSS = `
 html,body{margin:0}
 .xc{width:auto;max-width:var(--xc-w);margin:0 auto}
-@media (max-width:520px){.xc{--xc-padx:18px !important;--xc-pady:26px !important}.xc[data-theme="script"] .xc-main{grid-template-columns:4.6em minmax(0,1fr);column-gap:.9em}}
+@media (max-width:520px){.xc:not([data-pad="1"]){--xc-padl:18px !important;--xc-padr:18px !important;--xc-padt:26px !important;--xc-padb:26px !important}.xc[data-theme="script"] .xc-main{grid-template-columns:4.6em minmax(0,1fr);column-gap:.9em}}
 `.trim();
 { const st = document.createElement('style'); st.id = 'xcStyle'; st.textContent = SHEET_CSS; document.body.insertBefore(st, $('#app')); }
 
@@ -939,7 +951,7 @@ const RATIOS = {'1:1': 1, '4:5': 4 / 5, '3:4': 3 / 4, '9:16': 9 / 16};
 const COLOR_KEYS = ['paper', 'ink', 'q', 'em', 'cb', 'ub', 'desk'];
 const themeColors = k => { const t = THEMES[k]; return {paper: t.paper, ink: t.ink, q: t.q, em: t.em, cb: t.cb || '#ffffff', ub: t.ub || '#c9dcf3', desk: t.desk || t.paper}; };
 const DEF = Object.assign({theme:'page', size:16, lh:1.8, width:640, names:true, avatars:false, nameColor:false, narr:'bubble', hl:'#ffe66d',
-  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false}, themeColors('page'));
+  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
 const S = Object.assign({}, DEF, store.get('xc.settings', {}));
 function sanitizeSettings(){
   if (!THEMES[S.theme]) S.theme = DEF.theme;
@@ -956,6 +968,7 @@ function sanitizeSettings(){
   if (!['center', 'left'].includes(S.cAlign)) S.cAlign = 'center';
   const num = (k, lo, hi) => { const v = Number(S[k]); S[k] = isFinite(v) ? Math.min(hi, Math.max(lo, v)) : DEF[k]; };
   num('size', 13, 22); num('lh', 1.4, 2.2); num('ls', -8, 30); num('sx', 80, 120); num('cDim', 0, 100);
+  num('padT', 0, 160); num('padB', 0, 160); num('padL', 0, 160); num('padR', 0, 160); num('padO', 0, 120);
   num('sizeD', 13, 22); num('lsD', -8, 30); num('sxD', 80, 120); num('gm', 40, 250); num('gn', 0, 300);
   if (![480, 560, 640, 720, 860].includes(S.width)) S.width = DEF.width;
   if (![1, 2, 3, 4].includes(S.scale)) S.scale = DEF.scale;
@@ -1469,9 +1482,15 @@ const isClear = () => S.transparent && S.format !== 'pdf';             // a PDF 
 const hasQuote = t => { DQ.lastIndex = 0; return DQ.test(t); };
 /* a speaker's box is dialogue through and through when it is written platform-style or has no quotation marks to tell the dialogue apart */
 const isDlg = t => S.platform || !hasQuote(t);
-const geoPx = () => (S.theme === 'card' && !S.cFrame ? [0, 2.4, 3] : curTheme().geo).map(f => Math.round(f * S.size));
+const geoBase = () => (S.theme === 'card' && !S.cFrame ? [0, 2.4, 3] : curTheme().geo).map(f => Math.round(f * S.size));
+const hasOuter = () => geoBase()[0] > 0;   // window themes and the framed card sit on a desk
+/* [outer, top, right, bottom, left]: the theme's own margins, or the writer's */
+function geoPx(){
+  const [o, x, y] = geoBase();
+  return S.padOwn ? [hasOuter() ? S.padO : 0, S.padT, S.padR, S.padB, S.padL] : [o, y, x, y, x];
+}
 function sheetVars(extra){
-  const T = curTheme(), [fpad, padx, pady] = geoPx(), clear = isClear();
+  const T = curTheme(), [fpad, padt, padr, padb, padl] = geoPx(), clear = isClear();
   /* text on a coloured bubble: the theme's ink if it reads, otherwise black or white; quote and italic colours follow */
   const on = bg => { const ok = isLight(bg) !== isLight(S.ink); const t = ok ? S.ink : (isLight(bg) ? '#16181c' : '#ffffff'); return {t, q: !S.quotes ? 'currentColor' : ok ? S.q : t, em: ok ? S.em : mix(t, bg, .28)}; };
   const far = (a, b) => { const x = hexToRgb(a), y = hexToRgb(b); return Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]); };
@@ -1481,7 +1500,7 @@ function sheetVars(extra){
   const v = Object.assign({
     '--xc-w': S.width + 'px', '--xc-size': S.size + 'px', '--xc-lh': S.lh, '--xc-font': FONTS[S.font].css, '--xc-fontd': FONTS[fontDKey()].css, '--xc-ls': (S.ls / 100) + 'em', '--xc-sx': S.sx / 100,
     '--xc-sized': dv('size') + 'px', '--xc-lsd': (dv('ls') / 100) + 'em', '--xc-sxd': dv('sx') / 100, '--xc-gm': S.gm / 100, '--xc-gn': S.gn / 100,
-    '--xc-fpad': fpad + 'px', '--xc-padx': padx + 'px', '--xc-pady': pady + 'px',
+    '--xc-fpad': fpad + 'px', '--xc-padt': padt + 'px', '--xc-padr': padr + 'px', '--xc-padb': padb + 'px', '--xc-padl': padl + 'px',
     '--xc-paper': S.paper, '--xc-chrome': mix(S.ink, S.paper, .87), '--xc-ink': S.ink, '--xc-q': S.quotes ? S.q : 'currentColor', '--xc-em': S.em,
     '--xc-desk': clear ? 'transparent' : T.frame ? S.desk : S.paper,
     '--xc-winbg': T.frame ? S.paper : clear ? 'transparent' : S.theme === 'card' && bgImage ? `rgba(${hexToRgb(S.paper).join(',')},${S.cDim / 100})` : S.paper,
@@ -1493,7 +1512,7 @@ function sheetVars(extra){
   }, extra || {});
   return Object.entries(v).map(([k, x]) => k + ':' + x).join(';');
 }
-const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data-sc="${S.script}" data-pf="${S.platform ? 1 : 0}" data-narr="${S.narr}" data-na="${S.narrAlign}" data-ni="${S.narrIndent ? 1 : 0}" data-frame="${curTheme().frame ? 1 : 0}" data-sx="${S.sx === 100 ? 0 : 1}" data-sxd="${dv('sx') === 100 ? 0 : 1}" data-av="${S.avatars ? 1 : 0}" data-cf="${S.cFrame ? 1 : 0}" data-ca="${S.cAlign}" style="${esc(sheetVars(extra))}"`;
+const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data-sc="${S.script}" data-pf="${S.platform ? 1 : 0}" data-narr="${S.narr}" data-na="${S.narrAlign}" data-ni="${S.narrIndent ? 1 : 0}" data-frame="${curTheme().frame ? 1 : 0}" data-sx="${S.sx === 100 ? 0 : 1}" data-sxd="${dv('sx') === 100 ? 0 : 1}" data-av="${S.avatars ? 1 : 0}" data-cf="${S.cFrame ? 1 : 0}" data-ca="${S.cAlign}" data-pad="${S.padOwn ? 1 : 0}" style="${esc(sheetVars(extra))}"`;
 const hasContent = () => blocks.some(b => (b.type === 'text' && b.text.trim()) || (b.type === 'img' && b.src));
 /* the flow as its pieces: head, the rows of the list, foot. The paged preview puts only the rows a page shows on that page. */
 function flowParts(){
@@ -1740,6 +1759,9 @@ function syncControls(){
   $('#oSizeD').textContent = S.sizeD + 'px'; $('#oLsD').textContent = (S.lsD > 0 ? '+' : '') + S.lsD; $('#oSxD').textContent = S.sxD + '%';
   $('#oGm').textContent = S.gm + '%'; $('#oGn').textContent = S.gn + '%';
   $('#dOwnBox').hidden = !S.dOwn;
+  $('#padBox').hidden = !S.padOwn;
+  $('#padOBox').hidden = !hasOuter();
+  for (const k of ['T', 'B', 'L', 'R', 'O']) $('#oPad' + k).textContent = S['pad' + k] + 'px';
   const T = curTheme();
   $$('[data-kind-only]').forEach(el => { el.hidden = el.dataset.kindOnly !== kindOf(); });
   $$('input[name="pf"]').forEach(r => { r.checked = (r.value === '1') === !!S.platform; });
@@ -1767,7 +1789,8 @@ function bindControls(){
       }
       store.set('xc.settings', S);
       if (k === 'quotes' || k === 'html' || k === 'paren') cache.clear();
-      if (k === 'dOwn' && v && S.sizeD === DEF.sizeD && S.lsD === DEF.lsD && S.sxD === DEF.sxD){ S.sizeD = S.size; S.lsD = S.ls; S.sxD = S.sx; }   // start from the narration values
+      if (k === 'padOwn' && v){ const [o, x, y] = geoBase(); Object.assign(S, {padT: y, padB: y, padL: x, padR: x, padO: o || S.padO}); store.set('xc.settings', S); }
+      if (k === 'dOwn' && v && S.sizeD === DEF.sizeD && S.lsD === DEF.lsD && S.sxD === DEF.sxD){ S.sizeD = S.size; S.lsD = S.ls; S.sxD = S.sx; store.set('xc.settings', S); }   // start from the narration values
       if (k === 'font' || k === 'fontD' || k === 'dOwn') fontsWanted();
       syncControls();
       if (live) renderSoon(); else renderPreview();
@@ -2132,7 +2155,7 @@ async function buildPages(mode, what, onPage){
     }
     return frames.get(cap);
   };
-  const bandMax = maxCssHeight(w0, scale), [, , pady] = geoPx();
+  const bandMax = maxCssHeight(w0, scale), padb = geoPx()[3];
   let i = 0;
   while (i < n){
     let j = i;
@@ -2148,7 +2171,7 @@ async function buildPages(mode, what, onPage){
       if (S.pageNo && n > 1){
         ctx.font = `${Math.round(S.size * .72 * scale)}px ${FONTS[S.font].css}`; ctx.fillStyle = mix(S.ink, S.paper, .45);
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(`${p + 1} / ${n}`, Math.round((x0 + w0 / 2) * scale), Math.round((y0 + cap + pady / 2) * scale));
+        ctx.fillText(`${p + 1} / ${n}`, Math.round((x0 + w0 / 2) * scale), Math.round((y0 + cap + padb / 2) * scale));
       }
       await onPage(pc, p, n, overhead + cap);
       pc.width = pc.height = 0;
