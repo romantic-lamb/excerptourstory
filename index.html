@@ -1588,7 +1588,7 @@ function renderMes(raw){
       s = s.replace(/￾/g, '"');
     }
     converter = converter || new showdown.Converter({simpleLineBreaks:true, strikethrough:true, tables:true, literalMidWordUnderscores:true,
-      noHeaderId:true, parseImgDimensions:true, emoji:false, underline:true, openLinksInNewWindow:true, disableForced4SpacesIndentedSublists:true});
+      noHeaderId:true, requireSpaceBeforeHeadingText:true, parseImgDimensions:true, emoji:false, underline:true, openLinksInNewWindow:true, disableForced4SpacesIndentedSublists:true});
     const tpl = document.createElement('template');
     tpl.innerHTML = DOMPurify.sanitize(converter.makeHtml(s), PURIFY);
     tpl.content.querySelectorAll('img').forEach(img => {
