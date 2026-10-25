@@ -725,9 +725,9 @@ window.XC_FONTS='cdn';
 <dialog id="fileDlg" aria-labelledby="fileTitle">
   <div class="dhead">
     <h2 id="fileTitle">채팅 파일에서 가져오기</h2>
-    <p class="hint">SillyTavern 폴더의 <code class="path">data/default-user/chats/캐릭터 이름/</code> 안에 있는 <code class="path">.jsonl</code> 파일이에요. 파일은 이 브라우저 안에서만 읽고, 어디에도 올리지 않아요.</p>
+    <p class="hint">SillyTavern 폴더의 <code class="path">data/default-user/chats/캐릭터 이름/</code> 안에 있는 <code class="path">.jsonl</code> 파일이에요. 마크다운(<code class="path">.md</code>)이나 텍스트 파일로 저장한 로그는 ‘한꺼번에 붙여넣기’로 열려요. 파일은 이 브라우저 안에서만 읽고, 어디에도 올리지 않아요.</p>
     <div class="mrow"><button type="button" class="btn" id="pickFile">파일 고르기</button><span class="hint" id="fileName">고른 파일 없음</span>
-      <input type="file" id="fileInput" accept=".jsonl,.json,.txt,application/json" hidden></div>
+      <input type="file" id="fileInput" accept=".jsonl,.json,.txt,.md,.markdown,application/json,text/plain,text/markdown" hidden></div>
   </div>
   <div class="dbody" id="fileBody" hidden>
     <div class="mrow">
@@ -2197,6 +2197,13 @@ $('#pasteGo').addEventListener('click', () => {
   const fallback = fallbackName != null ? speakerByName(fallbackName, fallbackSide === 'r').id : '';
   const made = [];
   const add = (sp, t) => made.push(...piecesToBlocks(t, sp, how, strip));
+  /* a line of only --- , *** or ___ is a scene break in a markdown log: it becomes a divider box */
+  const HR_LINE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
+  const scenes = text.split('\n').reduce((acc, line) => { if (HR_LINE.test(line)) acc.push(''); else acc[acc.length - 1] += (acc[acc.length - 1] ? '\n' : '') + line; return acc; }, ['']);
+  scenes.forEach((scene, si) => {
+  if (si > 0 && made.length) made.push({hr: true});
+  const text = scene;
+  if (!text.trim()) return;
   if (mode === 'one') add(fallback, text);
   else if (mode === 'blank') for (const part of text.split(/\n[ \t]*\n+/)) add(fallback, part);
   else {
@@ -2209,10 +2216,13 @@ $('#pasteGo').addEventListener('click', () => {
     }
     for (const c of chunks) add(c.sp, c.text);
   }
-  for (const b of made) blocks.push({id: uid(), type: 'text', sp: b.sp, text: b.text});
+  });
+  while (made.length && made[made.length - 1].hr) made.pop();
+  for (const b of made) blocks.push(b.hr ? {id: uid(), type: 'hr'} : {id: uid(), type: 'text', sp: b.sp, text: b.text});
   $('#pasteDlg').close(); $('#pasteText').value = ''; nameChoice = new Map();
   refreshAll(); saveDraftSoon();
-  toast(made.length ? `${made.length}칸을 만들었어요.` : '만들 칸이 없었어요.');
+  const nHr = made.filter(b => b.hr).length;
+  toast(made.length ? `${made.length - nHr}칸을 만들었어요.${nHr ? ` 장면 구분 ${nHr}곳은 구분선으로 넣었어요.` : ''}` : '만들 칸이 없었어요.');
 });
 $$('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 
@@ -2251,8 +2261,21 @@ const picked = new Set();
 const plain = s => String(s).replace(/<[^>]*>/g, ' ').replace(/[*_`#>~]+/g, '').replace(/\s+/g, ' ').trim();
 async function loadChatFile(file){
   if (!file) return;
-  try { fileMsgs = parseChat(await file.text()); }
-  catch (e) { toast('이 파일에서 메시지를 찾지 못했어요. SillyTavern의 .jsonl 채팅 파일인지 확인해 주세요.'); return; }
+  const raw = await file.text();
+  try { fileMsgs = parseChat(raw); }
+  catch (e) {
+    /* not a SillyTavern chat: a log saved as markdown or plain text goes into the paste dialog, ready to be cut into boxes */
+    if (!raw.trim() || /\.jsonl?$/i.test(file.name)){ toast('이 파일에서 메시지를 찾지 못했어요. SillyTavern의 .jsonl 채팅 파일인지 확인해 주세요.'); return; }
+    if ($('#fileDlg').open) $('#fileDlg').close();
+    $('#openPaste').click();
+    $('#pasteText').value = raw.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+    nameChoice = new Map(); scanNames();
+    /* no ‘이름:’ lines: a story log, so every paragraph becomes its own box */
+    if (![...nameChoice.values()].some(Boolean)) $('#pmBlank').checked = true;
+    syncPasteUI();
+    toast(`${file.name}을(를) 붙여넣기 창에 열었어요. 나눌 방법을 확인하고 ‘칸 만들기’를 누르세요.`);
+    return;
+  }
   picked.clear(); lastPick = null;
   $('#fileName').textContent = `${file.name} · 메시지 ${fileMsgs.length}개`;
   $('#search').value = ''; $('#rangeFrom').value = ''; $('#rangeTo').value = '';
