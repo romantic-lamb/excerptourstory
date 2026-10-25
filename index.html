@@ -547,6 +547,7 @@ window.XC_FONTS='cdn';
           </select></label>
           <label class="chk" for="kIndent"><input type="checkbox" id="kIndent" data-s="narrIndent"> 문단 첫 줄 들여쓰기</label>
           <h3>대사</h3>
+          <label class="chk" for="kDIndent"><input type="checkbox" id="kDIndent" data-s="dlgIndent"> 문단 첫 줄 들여쓰기</label>
           <label class="chk" for="kDOwn"><input type="checkbox" id="kDOwn" data-s="dOwn"> 대사를 지문과 다르게 꾸미기</label>
           <div class="subgrp" id="dOwnBox">
             <label class="field" for="sFontD"><span>글꼴</span><select class="inp" id="sFontD" data-s="fontD"></select></label>
@@ -977,6 +978,7 @@ const SHEET_CSS = `
 .xc[data-theme="rec"] .xc-foot{text-align:right}
 
 .xc[data-ni="1"] .xc-narr .xc-body p{text-indent:1em}
+.xc[data-di="1"] :is(.xc-char,.xc-user) .xc-body p{text-indent:1em}
 .xc[data-na="left"] .xc-list .xc-msg.xc-narr .xc-body{text-align:left}
 .xc[data-na="justify"] .xc-list .xc-msg.xc-narr .xc-body{text-align:justify}
 .xc[data-na="center"] .xc-list .xc-msg.xc-narr .xc-body{text-align:center}
@@ -1084,7 +1086,7 @@ const pageOff = (cap, h) => { const T = curTheme(), room = Math.max(0, cap - h);
 const COLOR_KEYS = ['paper', 'ink', 'q', 'em', 'cb', 'ub', 'desk'];
 const themeColors = k => { const t = THEMES[k]; return {paper: t.paper, ink: t.ink, q: t.q, em: t.em, cb: t.cb || '#ffffff', ub: t.ub || '#c9dcf3', desk: t.desk || t.paper}; };
 const DEF = Object.assign({theme:'page', size:16, lh:1.8, width:640, names:true, avatars:false, nameColor:false, narr:'bubble', hl:'#ffe66d',
-  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, shot:false, shotR:'16:9', spoil:'bar', times:false, hr:'line', padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
+  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, dlgIndent:false, shot:false, shotR:'16:9', spoil:'bar', times:false, hr:'line', padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
 const S = Object.assign({}, DEF, store.get('xc.settings', {}));
 function sanitizeSettings(){
   if (!THEMES[S.theme]) S.theme = DEF.theme;
@@ -1706,7 +1708,7 @@ function sheetVars(extra){
   }, extra || {});
   return Object.entries(v).map(([k, x]) => k + ':' + x).join(';');
 }
-const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data-sc="${S.script}" data-pf="${S.platform ? 1 : 0}" data-narr="${S.narr}" data-na="${S.narrAlign}" data-ni="${S.narrIndent ? 1 : 0}" data-frame="${curTheme().frame ? 1 : 0}" data-sx="${S.sx === 100 ? 0 : 1}" data-sxd="${dv('sx') === 100 ? 0 : 1}" data-av="${S.avatars ? 1 : 0}" data-cf="${S.cFrame ? 1 : 0}" data-ca="${S.cAlign}" data-pad="${S.padOwn ? 1 : 0}" data-sp="${S.spoil}" data-hr="${S.hr}" data-tm="${S.times && kindOf() === 'bubble' ? 1 : 0}" style="${esc(sheetVars(extra))}"`;
+const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data-sc="${S.script}" data-pf="${S.platform ? 1 : 0}" data-narr="${S.narr}" data-na="${S.narrAlign}" data-ni="${S.narrIndent ? 1 : 0}" data-di="${S.dlgIndent ? 1 : 0}" data-frame="${curTheme().frame ? 1 : 0}" data-sx="${S.sx === 100 ? 0 : 1}" data-sxd="${dv('sx') === 100 ? 0 : 1}" data-av="${S.avatars ? 1 : 0}" data-cf="${S.cFrame ? 1 : 0}" data-ca="${S.cAlign}" data-pad="${S.padOwn ? 1 : 0}" data-sp="${S.spoil}" data-hr="${S.hr}" data-tm="${S.times && kindOf() === 'bubble' ? 1 : 0}" style="${esc(sheetVars(extra))}"`;
 const hasContent = () => blocks.some(b => (b.type === 'text' && b.text.trim()) || (b.type === 'img' && b.src));
 /* the flow as its pieces: head, the rows of the list, foot. The paged preview puts only the rows a page shows on that page. */
 function flowParts(){
