@@ -59,6 +59,8 @@ AI 채팅(SillyTavern, 그 밖의 채팅 플랫폼)을 붙여 넣고 다듬어 *
 | [수트 SUIT](https://noonnu.cc/font_page/845) | SUNN YOUN | 눈누 CDN |
 | [스위트 SUITE](https://noonnu.cc/font_page/1150) | SUNN YOUN | 눈누 CDN |
 | [KBIZ한마음명조체](https://noonnu.cc/font_page/12) | 중소기업중앙회 × 헤움디자인 | 눈누 CDN |
+| [부크크 명조](https://noonnu.cc/font_page/1084) | 부크크 | 눈누 CDN |
+| [부산단디명조](https://noonnu.cc/font_page/1990) | 부산광역시 (공공누리 제1유형) | 눈누 CDN |
 | [창원단감둥근체](https://noonnu.cc/font_page/1700) | 창원특례시 | 눈누 CDN |
 | [레페리포인트 Oblique](https://noonnu.cc/font_page/823) | 레페리 × 윤디자인 | 눈누 CDN |
 | [림굴](https://noonnu.cc/font_page/1909) | Monad ABXY | 눈누 CDN |
