@@ -833,7 +833,7 @@ const SHEET_CSS = `
 .xc-q{color:var(--xc-q)}
 .xc-q,.xc-dlg{font-family:var(--xc-fontd);font-size:var(--xc-sized);letter-spacing:var(--xc-lsd)}
 .xc[data-pf="1"] .xc-dlg em,.xc[data-pf="1"] .xc-dlg i{font-family:var(--xc-font);font-size:var(--xc-size);letter-spacing:var(--xc-ls)}
-.xc[data-pf="1"] .xc-list .xc-msg .xc-dlg{color:var(--xc-q)}
+.xc .xc-list .xc-msg .xc-dlg{color:var(--xc-q)}   /* a speaker's box with no quotation marks is all dialogue: it takes the dialogue colour too */
 .xc-hl{background:var(--xc-hl);color:var(--xc-hlt);padding:.1em 1px .1em 0;margin-right:-1px}
 .xc-hl .xc-q,.xc-hl em,.xc-hl i,.xc-hl .xc-em{color:inherit}
 .xc-body strong,.xc-body b{font-weight:700}
@@ -2206,10 +2206,24 @@ $('#pasteGo').addEventListener('click', () => {
   /* a line of only --- , *** or ___ is a scene break in a markdown log: it becomes a divider box */
   const HR_LINE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
   const scenes = text.split('\n').reduce((acc, line) => { if (HR_LINE.test(line)) acc.push(''); else acc[acc.length - 1] += (acc[acc.length - 1] ? '\n' : '') + line; return acc; }, ['']);
+  /* ‘이름 |’ at the start of a paragraph: that paragraph is the named speaker's line, label removed, no quotation marks needed */
+  const BAR = /^[ \t]*([^\s|｜][^|｜\n]{0,19}?)[ \t]*[|｜][ \t]*(.*)$/;
+  const barParas = text.split(/\n[ \t]*\n+/).filter(p => { const m = p.split('\n')[0].match(BAR); return m && okName(m[1]); });
+  let nBar = 0;
   scenes.forEach((scene, si) => {
   if (si > 0 && made.length) made.push({hr: true});
   const text = scene;
   if (!text.trim()) return;
+  if (barParas.length && mode !== 'one'){
+    for (const part of text.split(/\n[ \t]*\n+/)){
+      const m = part.trim().split('\n')[0].match(BAR);
+      if (m && okName(m[1])){
+        const said = [m[2], ...part.trim().split('\n').slice(1)].join('\n').trim();
+        if (said){ made.push({sp: speakerByName(m[1]).id, text: said}); nBar++; }
+      } else if (part.trim()) add(fallback, part);
+    }
+    return;
+  }
   if (mode === 'one') add(fallback, text);
   else if (mode === 'blank') for (const part of text.split(/\n[ \t]*\n+/)) add(fallback, part);
   else {
@@ -2228,7 +2242,7 @@ $('#pasteGo').addEventListener('click', () => {
   $('#pasteDlg').close(); $('#pasteText').value = ''; nameChoice = new Map();
   refreshAll(); saveDraftSoon();
   const nHr = made.filter(b => b.hr).length;
-  toast(made.length ? `${made.length - nHr}칸을 만들었어요.${nHr ? ` 장면 구분 ${nHr}곳은 구분선으로 넣었어요.` : ''}` : '만들 칸이 없었어요.');
+  toast(made.length ? `${made.length - nHr}칸을 만들었어요.${nBar ? ` ‘이름 |’ 대사 ${nBar}개를 화자별로 나눴어요.` : ''}${nHr ? ` 장면 구분 ${nHr}곳은 구분선으로 넣었어요.` : ''}` : '만들 칸이 없었어요.');
 });
 $$('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 
