@@ -1360,6 +1360,20 @@ function syncSel(){
   if ([...$('#selSp').options].some(o => o.value === keep)) $('#selSp').value = keep;
   for (const id of ['selApply', 'selMerge', 'selDel']) $('#' + id).disabled = !sel.size;
 }
+/* paragraphs that start with ‘이름 |’ are that speaker's line; the rest is cut into dialogue and narration as usual.
+   Returns null when the text has no such paragraph. */
+const BAR = /^[ \t]*([^\s|｜][^|｜\n]{0,19}?)[ \t]*[|｜][ \t]*(.*)$/;
+function barPieces(text, sp, how, strip){
+  const parts = text.split(/\n[ \t]*\n+/), label = p => { const m = p.trim().split('\n')[0].match(BAR); return m && okName(m[1]) ? m : null; };
+  if (!parts.some(label)) return null;
+  const out = [];
+  for (const part of parts){
+    const m = label(part);
+    if (m){ const said = [m[2], ...part.trim().split('\n').slice(1)].join('\n').trim(); if (said) out.push({sp: speakerByName(m[1]).id, text: said, bar: true}); }
+    else if (part.trim()) out.push(...piecesToBlocks(part, sp, how, strip));
+  }
+  return out;
+}
 function blockHTML(b, n){
   const tools = `<button type="button" class="btn ghost bUp" aria-label="위로 옮기기"${n === 0 ? ' disabled' : ''}>↑</button><button type="button" class="btn ghost bDown" aria-label="아래로 옮기기"${n === blocks.length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="btn ghost bDel" aria-label="이 칸 지우기">×</button>`;
   if (b.type === 'hr') return `<li class="blk${sel.has(b.id) ? ' picked' : ''}" data-id="${b.id}"><div class="bhead">${selBox(b)}<span class="bkind">── 구분선</span><span class="bbtns">${tools}</span></div></li>`;
@@ -1451,11 +1465,26 @@ $('#blocks').addEventListener('click', e => {
   else if (btn.matches('.bPick')){ imgTarget = b; $('#imgInput').value = ''; $('#imgInput').click(); }
   else if (btn.matches('.bSplit')){
     const how = splitHow();
-    const made = piecesToBlocks(b.text, b.sp || nextSpeaker(i) || '', how, splitPref.strip);
+    /* a box holding only ‘이름 |’ names the speaker of the box after it. Every such box is tidied at once:
+       the label goes, the next box becomes that speaker's line. */
+    const onlyLabel = x => { if (x.type !== 'text') return null; const t = x.text.trim(); if (t.includes('\n')) return null; const m = t.match(BAR); return m && !m[2].trim() && okName(m[1]) ? m[1] : null; };
+    if (onlyLabel(b)){
+      pushUndo();
+      let n = 0;
+      for (let j = blocks.length - 2; j >= 0; j--){
+        const name = onlyLabel(blocks[j]), next = blocks[j + 1];
+        if (!name || next.type !== 'text' || onlyLabel(next)) continue;
+        next.sp = speakerByName(name).id; blocks.splice(j, 1); n++;
+      }
+      renderSpeakers(); renderBlocks(); changed();
+      toast(n ? `‘이름 |’ 칸 ${n}개를 정리했어요. 바로 다음 칸이 그 화자의 대사가 됐어요.` : '이 칸 다음에 대사 칸이 없어요.');
+      return;
+    }
+    const made = barPieces(b.text, b.sp || nextSpeaker(i) || '', how, splitPref.strip) || piecesToBlocks(b.text, b.sp || nextSpeaker(i) || '', how, splitPref.strip);
     if (made.length < 2 && (!made[0] || made[0].sp === b.sp)){ toast(how === 'star' ? '이 칸에는 나눌 별표 * * 가 없어요.' : '이 칸에는 나눌 따옴표가 없어요.'); return; }
     pushUndo();
     blocks.splice(i, 1, ...made.map(m => ({id: uid(), type: 'text', sp: m.sp, text: m.text})));
-    renderBlocks(); changed();
+    renderSpeakers(); renderBlocks(); changed();
     toast(`대사와 지문 ${made.length}칸으로 나눴어요.`);
   }
 });
@@ -2207,23 +2236,13 @@ $('#pasteGo').addEventListener('click', () => {
   const HR_LINE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
   const scenes = text.split('\n').reduce((acc, line) => { if (HR_LINE.test(line)) acc.push(''); else acc[acc.length - 1] += (acc[acc.length - 1] ? '\n' : '') + line; return acc; }, ['']);
   /* ‘이름 |’ at the start of a paragraph: that paragraph is the named speaker's line, label removed, no quotation marks needed */
-  const BAR = /^[ \t]*([^\s|｜][^|｜\n]{0,19}?)[ \t]*[|｜][ \t]*(.*)$/;
-  const barParas = text.split(/\n[ \t]*\n+/).filter(p => { const m = p.split('\n')[0].match(BAR); return m && okName(m[1]); });
   let nBar = 0;
   scenes.forEach((scene, si) => {
   if (si > 0 && made.length) made.push({hr: true});
   const text = scene;
   if (!text.trim()) return;
-  if (barParas.length && mode !== 'one'){
-    for (const part of text.split(/\n[ \t]*\n+/)){
-      const m = part.trim().split('\n')[0].match(BAR);
-      if (m && okName(m[1])){
-        const said = [m[2], ...part.trim().split('\n').slice(1)].join('\n').trim();
-        if (said){ made.push({sp: speakerByName(m[1]).id, text: said}); nBar++; }
-      } else if (part.trim()) add(fallback, part);
-    }
-    return;
-  }
+  const bars = mode !== 'one' ? barPieces(text, fallback, how, strip) : null;
+  if (bars){ made.push(...bars); nBar += bars.filter(x => x.bar).length; return; }
   if (mode === 'one') add(fallback, text);
   else if (mode === 'blank') for (const part of text.split(/\n[ \t]*\n+/)) add(fallback, part);
   else {
