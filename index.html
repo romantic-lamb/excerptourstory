@@ -496,6 +496,7 @@ window.XC_FONTS='cdn';
         <div id="selBar" hidden>
           <b id="selCount">0칸 골랐어요</b>
           <select class="inp" id="selSp" aria-label="바꿀 화자"></select><button type="button" class="btn" id="selApply">화자 바꾸기</button>
+          <span class="selAlt"><select class="inp" id="selSp2" aria-label="번갈아 넣을 두 번째 화자"></select><button type="button" class="btn" id="selAlt" title="고른 칸 중 대사 칸에 두 화자를 번갈아 넣어요">번갈아 넣기</button></span>
           <button type="button" class="btn" id="selMerge">하나로 합치기</button>
           <button type="button" class="btn" id="selDel">지우기</button>
           <button type="button" class="btn ghost" id="selAll">모두</button>
@@ -609,6 +610,11 @@ window.XC_FONTS='cdn';
             <label class="chk wide" for="kHtml"><input type="checkbox" id="kHtml" data-s="html"> 붙여 넣은 HTML(상태창 등) 그리기</label>
             <label class="chk wide" for="kTimes"><input type="checkbox" id="kTimes" data-s="times"> 말풍선 옆에 시간 쓰기 <span class="hint" id="timesHint">쓰기 탭의 대사 칸마다 ‘시간’ 칸이 생겨요</span></label>
           </div>
+          <h3>원문 병기 <code class="path">"원문" (번역)</code></h3>
+          <label class="field" for="sBiShow"><span>보이기</span><select class="inp" id="sBiShow" data-s="biShow"><option value="both">번역 위 · 원문 아래</option><option value="tr">번역만</option><option value="orig">원문만</option></select></label>
+          <label class="field" for="sBiSize"><span>원문 크기</span><span class="rng"><input type="range" id="sBiSize" data-s="biSize" data-t="n" min="60" max="100" step="5"><output id="oBiSize" for="sBiSize"></output></span></label>
+          <label class="field" for="sBiFont"><span>원문 글꼴</span><select class="inp" id="sBiFont" data-s="biFont"></select></label>
+          <p class="hint">대사를 <code class="path">"You went quiet." (조용해졌네.)</code>처럼 쓰면 영어와 한글을 알아서 원문·번역으로 나눠 두 줄로 보여 줘요.</p>
           <label class="field" for="sSpoil"><span>가림 <code class="path">||글||</code></span><select class="inp" id="sSpoil" data-s="spoil"><option value="bar">검은 막대로 가리기</option><option value="dots">●●● 동그라미로 바꾸기</option><option value="show">가리지 않고 보이기</option></select></label>
           <label class="field" for="sHr"><span>구분선 모양</span><select class="inp" id="sHr" data-s="hr"></select></label>
           <p class="hint">칸 안에서는 마크다운이 그대로 통해요. <code class="path">*기울임*</code> <code class="path">**굵게**</code> <code class="path">==형광펜==</code> <code class="path">||가림||</code></p>
@@ -834,6 +840,11 @@ const SHEET_CSS = `
 .xc-q,.xc-dlg{font-family:var(--xc-fontd);font-size:var(--xc-sized);letter-spacing:var(--xc-lsd)}
 .xc[data-pf="1"] .xc-dlg em,.xc[data-pf="1"] .xc-dlg i{font-family:var(--xc-font);font-size:var(--xc-size);letter-spacing:var(--xc-ls)}
 .xc .xc-list .xc-msg .xc-dlg{color:var(--xc-q)}   /* a speaker's box with no quotation marks is all dialogue: it takes the dialogue colour too */
+/* a bilingual pair: the translation as the line, the original under it, smaller and quieter */
+.xc-bi{display:block}
+.xc-bt,.xc-bo{display:block}
+.xc-bo{margin-top:.2em;font-family:var(--xc-fontb);font-size:calc(var(--xc-biz) * 1em);line-height:1.5;opacity:.6}
+.xc-bo .xc-q{color:inherit}
 .xc-hl{background:var(--xc-hl);color:var(--xc-hlt);padding:.1em 1px .1em 0;margin-right:-1px}
 .xc-hl .xc-q,.xc-hl em,.xc-hl i,.xc-hl .xc-em{color:inherit}
 .xc-body strong,.xc-body b{font-weight:700}
@@ -1092,7 +1103,7 @@ const pageOff = (cap, h) => { const T = curTheme(), room = Math.max(0, cap - h);
 const COLOR_KEYS = ['paper', 'ink', 'q', 'em', 'cb', 'ub', 'desk'];
 const themeColors = k => { const t = THEMES[k]; return {paper: t.paper, ink: t.ink, q: t.q, em: t.em, cb: t.cb || '#ffffff', ub: t.ub || '#c9dcf3', desk: t.desk || t.paper}; };
 const DEF = Object.assign({theme:'page', size:16, lh:1.8, width:640, names:true, avatars:false, nameColor:false, narr:'bubble', hl:'#ffe66d',
-  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, dlgIndent:false, shot:false, shotR:'16:9', spoil:'bar', times:false, hr:'line', padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
+  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, dlgIndent:false, biShow:'both', biSize:85, biFont:'', shot:false, shotR:'16:9', spoil:'bar', times:false, hr:'line', padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
 const S = Object.assign({}, DEF, store.get('xc.settings', {}));
 function sanitizeSettings(){
   if (!THEMES[S.theme]) S.theme = DEF.theme;
@@ -1113,6 +1124,7 @@ function sanitizeSettings(){
   const num = (k, lo, hi) => { const v = Number(S[k]); S[k] = isFinite(v) ? Math.min(hi, Math.max(lo, v)) : DEF[k]; };
   num('size', 13, 22); num('lh', 1.4, 2.2); num('ls', -8, 30); num('sx', 80, 120); num('cDim', 0, 100);
   num('padT', 0, 160); num('padB', 0, 160); num('padL', 0, 160); num('padR', 0, 160); num('padO', 0, 120);
+  num('biSize', 60, 100); if (!['both', 'tr', 'orig'].includes(S.biShow)) S.biShow = 'both'; if (S.biFont && !FONTS[S.biFont]) S.biFont = '';
   num('sizeD', 13, 22); num('lsD', -8, 30); num('sxD', 80, 120); num('gm', 40, 250); num('gn', 0, 300);
   if (![480, 560, 640, 720, 860].includes(S.width)) S.width = DEF.width;
   if (![1, 2, 3, 4].includes(S.scale)) S.scale = DEF.scale;
@@ -1326,9 +1338,14 @@ function splitPieces(text, how, strip){
     let pos = 0, m; re.lastIndex = 0;
     while ((m = re.exec(para))){
       const before = para.slice(pos, m.index);
-      if (star){ push(true, before); push(false, m[1]); }
-      else { push(false, before); push(true, strip ? m[0].slice(1, -1) : m[0]); }
-      pos = m.index + m[0].length;
+      if (star){ push(true, before); push(false, m[1]); pos = m.index + m[0].length; }
+      else {
+        push(false, before);
+        /* a bracket right after the quotation is its translation (or original): it stays in the same box */
+        const tail = para.slice(m.index + m[0].length).match(/^[ \t]*\([^()\n]+\)/);
+        if (tail){ push(true, m[0] + ' ' + tail[0].trim()); pos = m.index + m[0].length + tail[0].length; re.lastIndex = pos; }
+        else { push(true, strip ? m[0].slice(1, -1) : m[0]); pos = m.index + m[0].length; }
+      }
     }
     push(star, para.slice(pos));
   }
@@ -1358,7 +1375,10 @@ function syncSel(){
   const keep = $('#selSp').value;
   $('#selSp').innerHTML = spOptions('');
   if ([...$('#selSp').options].some(o => o.value === keep)) $('#selSp').value = keep;
-  for (const id of ['selApply', 'selMerge', 'selDel']) $('#' + id).disabled = !sel.size;
+  const keep2 = $('#selSp2').value;
+  $('#selSp2').innerHTML = speakers.map(s => `<option value="${s.id}">${esc(s.name || '이름 없음')}</option>`).join('');
+  if ([...$('#selSp2').options].some(o => o.value === keep2)) $('#selSp2').value = keep2; else if (speakers[1]) $('#selSp2').value = speakers[1].id;
+  for (const id of ['selApply', 'selMerge', 'selDel', 'selAlt']) $('#' + id).disabled = !sel.size;
 }
 /* paragraphs that start with ‘이름 |’ are that speaker's line; the rest is cut into dialogue and narration as usual.
    Returns null when the text has no such paragraph. */
@@ -1499,6 +1519,16 @@ $('#selApply').addEventListener('click', () => {
   renderBlocks(); changed();
   toast(`${hit.length}칸을 ‘${to ? (spById(to) || {}).name || '이름 없음' : '지문'}’(으)로 바꿨어요.`);
 });
+/* the dialogue boxes among those picked go to two speakers in turn: first, second, first… */
+$('#selAlt').addEventListener('click', () => {
+  const a = $('#selSp').value, b = $('#selSp2').value;
+  if (!a || !b || a === b){ toast('왼쪽과 오른쪽에서 서로 다른 화자 둘을 골라 주세요.'); return; }
+  const hit = blocks.filter(x => sel.has(x.id) && x.type === 'text' && x.sp);
+  if (!hit.length){ toast('고른 칸 중에 대사 칸이 없어요.'); return; }
+  pushUndo(); hit.forEach((x, i) => { x.sp = i % 2 ? b : a; });
+  renderBlocks(); changed();
+  toast(`대사 ${hit.length}칸에 ‘${spById(a).name}’, ‘${spById(b).name}’를 번갈아 넣었어요. 틀린 칸만 고치면 돼요.`);
+});
 $('#selMerge').addEventListener('click', () => {
   const hit = blocks.filter(b => sel.has(b.id) && b.type === 'text');
   if (hit.length < 2){ toast('글 칸을 두 개 이상 골라 주세요.'); return; }
@@ -1596,6 +1626,24 @@ const PAREN_RE = /```[\s\S]*?```|`[^`\n]*`|(^|[^\]])(\([^()\n]+\))/g;
 const SP_RE = /```[\s\S]*?```|`[^`\n]*`|\|\|([^|\n](?:[^\n]*?[^|\n])?)\|\|/g;
 const HL_RE = /```[\s\S]*?```|`[^`\n]*`|==([^=\n](?:[^\n]*?[^=\n])?)==/g;
 
+/* "original" (translation): a quotation followed at once by a bracket, one side in Latin letters and the other in Hangul */
+const PAIR_RE = /```[\s\S]*?```|`[^`\n]*`|("([^"\n]+)"|“([^”\n]+)”)[ \t]*\(([^()\n]+)\)/g;
+const latinish = t => (t.match(/[A-Za-z]/g) || []).length > (t.match(/[가-힣]/g) || []).length;
+const hangulish = t => (t.match(/[가-힣]/g) || []).length > (t.match(/[A-Za-z]/g) || []).length;
+function biPairs(s){
+  return s.replace(PAIR_RE, (m, q, a, b, par) => {
+    if (!q) return m;
+    const inq = a != null ? a : b, open = a != null ? '"' : '“', close = a != null ? '"' : '”';
+    let orig, tr;
+    if (latinish(inq) && hangulish(par)){ orig = inq; tr = par; }
+    else if (hangulish(inq) && latinish(par)){ orig = par; tr = inq; }
+    else return m;
+    const T = open + tr.trim() + close, O = open + orig.trim() + close;
+    if (S.biShow === 'tr') return T;
+    if (S.biShow === 'orig') return O;
+    return `<span class="xc-bi"><span class="xc-bt">${T}</span><span class="xc-bo">${O}</span></span>`;
+  });
+}
 function renderMes(raw){
   const hit = cache.get(raw); if (hit != null) return hit;
   let s = String(raw ?? '').replace(/\r\n?/g, '\n');
@@ -1610,6 +1658,7 @@ function renderMes(raw){
   if (!libs){
     html = s.split(/\n{2,}/).map(p => '<p>' + esc(p).replace(/\|\|([^|\n]+)\|\|/g, '<span class="xc-sp">$1</span>').replace(/==([^=\n]+)==/g, '<mark class="xc-hl">$1</mark>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>').replace(/\n/g, '<br>') + '</p>').join('');
   } else {
+    s = biPairs(s);
     s = s.replace(SP_RE, (m, inner) => inner ? '<span class="xc-sp">' + inner + '</span>' : m);
     s = s.replace(HL_RE, (m, inner) => inner ? '<mark class="xc-hl">' + inner + '</mark>' : m);
     if (S.paren){
@@ -1679,7 +1728,7 @@ function fontsForced(){
 }
 let forcedTold = false;
 async function fontsWanted(){
-  const ask = ++fontAsk, keys = [...new Set([S.font, fontDKey()])];
+  const ask = ++fontAsk, keys = [...new Set([S.font, fontDKey(), fontBKey()])];
   const forced = fontsForced();
   $('#fontNote').hidden = !forced;
   if (forced){
@@ -1708,6 +1757,7 @@ const curTheme = () => THEMES[S.theme];
 /* dialogue follows narration unless it is set apart */
 const dv = k => S.dOwn ? S[k + 'D'] : S[k];
 const fontDKey = () => (S.dOwn && S.fontD) || S.font;
+const fontBKey = () => S.biFont || fontDKey();   // the original-language line of a bilingual pair
 const kindOf = () => curTheme().frame ? S.winKind : curTheme().kind;   // window themes can hold plain lines or bubbles
 const isClear = () => S.transparent && S.format !== 'pdf';             // a PDF page cannot be transparent
 const hasQuote = t => { DQ.lastIndex = 0; return DQ.test(t); };
@@ -1729,7 +1779,7 @@ function sheetVars(extra){
   if (S.narr === 'bubble' && far(nb, S.cb) < 36){ nb = S.paper; nbd = mix(S.ink, S.paper, .7); }   // too close to the other person's bubble: draw an outline instead
   const u = on(S.ub), c = on(S.cb), n = on(S.narr === 'plain' ? S.paper : nb);
   const v = Object.assign({
-    '--xc-w': S.width + 'px', '--xc-size': S.size + 'px', '--xc-lh': S.lh, '--xc-font': FONTS[S.font].css, '--xc-fontd': FONTS[fontDKey()].css, '--xc-ls': (S.ls / 100) + 'em', '--xc-sx': S.sx / 100,
+    '--xc-w': S.width + 'px', '--xc-size': S.size + 'px', '--xc-lh': S.lh, '--xc-font': FONTS[S.font].css, '--xc-fontd': FONTS[fontDKey()].css, '--xc-fontb': FONTS[fontBKey()].css, '--xc-biz': S.biSize / 100, '--xc-ls': (S.ls / 100) + 'em', '--xc-sx': S.sx / 100,
     '--xc-sized': dv('size') + 'px', '--xc-lsd': (dv('ls') / 100) + 'em', '--xc-sxd': dv('sx') / 100, '--xc-gm': S.gm / 100, '--xc-gn': S.gn / 100,
     '--xc-fpad': fpad + 'px', '--xc-padt': padt + 'px', '--xc-padr': padr + 'px', '--xc-padb': padb + 'px', '--xc-padl': padl + 'px',
     '--xc-paper': S.paper, '--xc-chrome': mix(S.ink, S.paper, .87), '--xc-ink': S.ink, '--xc-q': S.quotes ? S.q : 'currentColor', '--xc-em': S.em,
@@ -1998,8 +2048,8 @@ if (window.ResizeObserver){
 /* ---------- settings ---------- */
 /* a number box beside every slider: typing moves the slider, moving the slider fills the box */
 /* sliders that move in coarse steps while the box beside them takes any value */
-const FINE = {sx: 1, sxD: 1, lh: .01, gm: 1, gn: 1};
-const UNIT = {size: 'px', sizeD: 'px', padT: 'px', padB: 'px', padL: 'px', padR: 'px', padO: 'px', sx: '%', sxD: '%', gm: '%', gn: '%', cDim: '%'};
+const FINE = {sx: 1, sxD: 1, lh: .01, gm: 1, gn: 1, biSize: 1};
+const UNIT = {biSize: '%', size: 'px', sizeD: 'px', padT: 'px', padB: 'px', padL: 'px', padR: 'px', padO: 'px', sx: '%', sxD: '%', gm: '%', gn: '%', cDim: '%'};
 const numFmt = r => { const v = Number(S[r.dataset.s]); return r.dataset.s === 'lh' ? v.toFixed(2) : String(v); };   // the setting itself, which can be finer than the slider's steps
 function buildNums(){
   $$('.rng input[type=range]').forEach(r => {
@@ -2037,6 +2087,7 @@ function buildControls(){
   const cats = [...FONT_CATS, ['기타', Object.keys(FONTS).filter(k => !listed.has(k))]].filter(c => c[1].some(k => FONTS[k]));
   $('#sFont').innerHTML = cats.map(([name, keys]) => `<optgroup label="${name}">${keys.filter(k => FONTS[k]).map(k => `<option value="${k}">${FONTS[k].label}</option>`).join('')}</optgroup>`).join('');
   $('#sFontD').innerHTML = '<option value="">지문과 동일</option>' + $('#sFont').innerHTML;
+  $('#sBiFont').innerHTML = '<option value="">대사와 동일</option>' + $('#sFont').innerHTML;
   $('#sHr').innerHTML = Object.entries(HRS).map(([k, h]) => `<option value="${k}">${h.t}</option>`).join('');
 }
 function syncControls(){
@@ -2085,11 +2136,11 @@ function bindControls(){
         if (t.paren != null){ S.paren = t.paren; cache.clear(); }
       }
       store.set('xc.settings', S);
-      if (k === 'quotes' || k === 'html' || k === 'paren' || k === 'spoil') cache.clear();
+      if (k === 'quotes' || k === 'html' || k === 'paren' || k === 'spoil' || k === 'biShow') cache.clear();
       if (k === 'times' || k === 'theme' || k === 'winKind') renderBlocks();   // the time boxes come and go with bubbles
       if (k === 'padOwn' && v){ const [o, x, y] = geoBase(); Object.assign(S, {padT: y, padB: y, padL: x, padR: x, padO: o || S.padO}); store.set('xc.settings', S); }
       if (k === 'dOwn' && v && S.sizeD === DEF.sizeD && S.lsD === DEF.lsD && S.sxD === DEF.sxD){ S.sizeD = S.size; S.lsD = S.ls; S.sxD = S.sx; store.set('xc.settings', S); }   // start from the narration values
-      if (k === 'font' || k === 'fontD' || k === 'dOwn') fontsWanted();
+      if (k === 'font' || k === 'fontD' || k === 'dOwn' || k === 'biFont') fontsWanted();
       syncControls();
       if (live) renderSoon(); else renderPreview();
     });
@@ -2431,7 +2482,7 @@ function baseName(){
 }
 function htmlFileString(){
   const f = FONTS[S.font], lt = '<', dt = lt + '!doc' + 'type html>';
-  const used = [...new Set([S.font, fontDKey()])].map(k => FONTS[k]);
+  const used = [...new Set([S.font, fontDKey(), fontBKey()])].map(k => FONTS[k]);
   const fontHead = used.filter(x => x.g).map(x => `${lt}link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${x.g}&display=swap">\n`).join('');
   const fontCss = used.filter(x => x.web).map(x => x.web.map(([u, w, fmt, range]) => `@font-face{font-family:'${x.family}';font-weight:${w};font-display:swap;src:url('${u}') format('${fmt}')${range ? ';unicode-range:' + range : ''}}`).join('\n') + '\n').join('');
   return `${dt}\n${lt}html lang="ko">\n${lt}head>\n${lt}meta charset="utf-8">\n${lt}meta name="viewport" content="width=device-width,initial-scale=1">\n${lt}title>${esc(rp(head.title) || '발췌')}${lt}/title>\n` +
@@ -2443,7 +2494,7 @@ const toBlob = (c, type, q) => new Promise((res, rej) => c.toBlob(b => b ? res(b
 /* Draw the pages. The flow is rendered as one strip (in bands when long) and cut at the planned places;
    the frame is rendered empty once per page height; each page is the frame with its piece of the strip set into it. */
 async function buildPages(mode, what, onPage){
-  await Promise.all([ensureFont(S.font), ensureFont(fontDKey())]);
+  await Promise.all([ensureFont(S.font), ensureFont(fontDKey()), ensureFont(fontBKey())]);
   const scale = +S.scale, W = S.width, host = $('#exportHost'), T = curTheme();
   host.innerHTML = sheetHTML('<div class="xc-spacer" style="height:0px"></div>');
   const frame = host.firstElementChild, spacer = $('.xc-spacer', frame);
