@@ -1380,17 +1380,28 @@ function syncSel(){
   if ([...$('#selSp2').options].some(o => o.value === keep2)) $('#selSp2').value = keep2; else if (speakers[1]) $('#selSp2').value = speakers[1].id;
   for (const id of ['selApply', 'selMerge', 'selDel', 'selAlt']) $('#' + id).disabled = !sel.size;
 }
-/* paragraphs that start with ‘이름 |’ are that speaker's line; the rest is cut into dialogue and narration as usual.
+/* lines that start with ‘이름 |’ are that speaker's line; the rest is cut into dialogue and narration as usual.
    Returns null when the text has no such paragraph. */
 const BAR = /^[ \t]*([^\s|｜][^|｜\n]{0,19}?)[ \t]*[|｜][ \t]*(.*)$/;
 function barPieces(text, sp, how, strip){
-  const parts = text.split(/\n[ \t]*\n+/), label = p => { const m = p.trim().split('\n')[0].match(BAR); return m && okName(m[1]) ? m : null; };
-  if (!parts.some(label)) return null;
+  const lab = l => { const m = l.match(BAR); return m && okName(m[1]) ? m : null; };
+  if (!text.split('\n').some(lab)) return null;
   const out = [];
-  for (const part of parts){
-    const m = label(part);
-    if (m){ const said = [m[2], ...part.trim().split('\n').slice(1)].join('\n').trim(); if (said) out.push({sp: speakerByName(m[1]).id, text: said, bar: true}); }
-    else if (part.trim()) out.push(...piecesToBlocks(part, sp, how, strip));
+  for (const part of text.split(/\n[ \t]*\n+/)){
+    // a line ‘이름 | 대사’ is one line of speech; a bare ‘이름 |’ takes the lines under it (until the next label);
+    // any other lines are cut into dialogue and narration as usual
+    let rest = [];
+    const flush = () => { const t = rest.join('\n'); if (t.trim()) out.push(...piecesToBlocks(t, sp, how, strip)); rest = []; };
+    const lines = part.split('\n');
+    for (let i = 0; i < lines.length; i++){
+      const m = lab(lines[i]);
+      if (!m){ rest.push(lines[i]); continue; }
+      flush();
+      let said = m[2].trim();
+      if (!said){ const body = []; while (i + 1 < lines.length && !lab(lines[i + 1])) body.push(lines[++i]); said = body.join('\n').trim(); }
+      if (said) out.push({sp: speakerByName(m[1]).id, text: said, bar: true});
+    }
+    flush();
   }
   return out;
 }
