@@ -546,6 +546,11 @@ window.XC_FONTS='cdn';
             <option value="center">가운데</option>
             <option value="right">오른쪽</option>
           </select></label>
+          <label class="field" for="sWrap"><span>줄 바꿈</span><select class="inp" id="sWrap" data-s="wrap">
+            <option value="word">단어 단위</option>
+            <option value="char">글자 단위</option>
+          </select></label>
+          <p class="hint" style="margin:-2px 0 8px">글자 단위로 하면 줄 끝이 고르게 차서 양쪽 정렬에서 글자 사이가 덜 벌어져요. 대사에도 똑같이 적용돼요.</p>
           <label class="chk" for="kIndent"><input type="checkbox" id="kIndent" data-s="narrIndent"> 문단 첫 줄 들여쓰기</label>
           <h3>대사</h3>
           <label class="chk" for="kDIndent"><input type="checkbox" id="kDIndent" data-s="dlgIndent"> 문단 첫 줄 들여쓰기</label>
@@ -990,6 +995,7 @@ const SHEET_CSS = `
 
 .xc[data-ni="1"] .xc-narr .xc-body p{text-indent:1em}
 .xc[data-di="1"] :is(.xc-char,.xc-user) .xc-body p{text-indent:1em}
+.xc[data-wb="char"]{word-break:normal}
 .xc[data-na="left"] .xc-list .xc-msg.xc-narr .xc-body{text-align:left}
 .xc[data-na="justify"] .xc-list .xc-msg.xc-narr .xc-body{text-align:justify}
 .xc[data-na="center"] .xc-list .xc-msg.xc-narr .xc-body{text-align:center}
@@ -1103,7 +1109,7 @@ const pageOff = (cap, h) => { const T = curTheme(), room = Math.max(0, cap - h);
 const COLOR_KEYS = ['paper', 'ink', 'q', 'em', 'cb', 'ub', 'desk'];
 const themeColors = k => { const t = THEMES[k]; return {paper: t.paper, ink: t.ink, q: t.q, em: t.em, cb: t.cb || '#ffffff', ub: t.ub || '#c9dcf3', desk: t.desk || t.paper}; };
 const DEF = Object.assign({theme:'page', size:16, lh:1.8, width:640, names:true, avatars:false, nameColor:false, narr:'bubble', hl:'#ffe66d',
-  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, dlgIndent:false, biShow:'both', biSize:85, biFont:'', shot:false, shotR:'16:9', spoil:'bar', times:false, hr:'line', padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
+  quotes:true, paren:false, group:true, html:true, format:'png', scale:2, pdfMode:'a4', split:'auto', pack:'zip', pageNo:false, font:'pretendard', cDim:55, cAlign:'center', cFrame:true, winKind:'plain', script:'align', fontD:'', transparent:false, platform:false, narrAlign:'auto', wrap:'word', ls:0, sx:100, dOwn:false, sizeD:16, lsD:0, sxD:100, gm:100, gn:100, narrIndent:false, dlgIndent:false, biShow:'both', biSize:85, biFont:'', shot:false, shotR:'16:9', spoil:'bar', times:false, hr:'line', padOwn:false, padT:40, padB:40, padL:38, padR:38, padO:24}, themeColors('page'));
 const S = Object.assign({}, DEF, store.get('xc.settings', {}));
 function sanitizeSettings(){
   if (!THEMES[S.theme]) S.theme = DEF.theme;
@@ -1112,6 +1118,7 @@ function sanitizeSettings(){
   if (!['plain', 'bubble'].includes(S.winKind)) S.winKind = 'plain';
   if (!['align', 'hang', 'inline'].includes(S.script)) S.script = 'align';
   if (!['auto', 'left', 'justify', 'center', 'right'].includes(S.narrAlign)) S.narrAlign = 'auto';
+  if (!['word', 'char'].includes(S.wrap)) S.wrap = 'word';
   if (S.split !== 'auto' && !RATIOS[S.split] && !/^n[234]$/.test(S.split)) S.split = 'auto';
   if (!['bubble', 'pill', 'plain'].includes(S.narr)) S.narr = 'bubble';
   if (!['png', 'pdf', 'html'].includes(S.format)) S.format = 'png';
@@ -1804,7 +1811,7 @@ function sheetVars(extra){
   }, extra || {});
   return Object.entries(v).map(([k, x]) => k + ':' + x).join(';');
 }
-const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data-sc="${S.script}" data-pf="${S.platform ? 1 : 0}" data-narr="${S.narr}" data-na="${S.narrAlign}" data-ni="${S.narrIndent ? 1 : 0}" data-di="${S.dlgIndent ? 1 : 0}" data-frame="${curTheme().frame ? 1 : 0}" data-sx="${S.sx === 100 ? 0 : 1}" data-sxd="${dv('sx') === 100 ? 0 : 1}" data-av="${S.avatars ? 1 : 0}" data-cf="${S.cFrame ? 1 : 0}" data-ca="${S.cAlign}" data-pad="${S.padOwn ? 1 : 0}" data-sp="${S.spoil}" data-hr="${S.hr}" data-tm="${S.times && kindOf() === 'bubble' ? 1 : 0}" style="${esc(sheetVars(extra))}"`;
+const rootAttrs = extra => `data-theme="${S.theme}" data-kind="${kindOf()}" data-sc="${S.script}" data-pf="${S.platform ? 1 : 0}" data-narr="${S.narr}" data-na="${S.narrAlign}" data-wb="${S.wrap}" data-ni="${S.narrIndent ? 1 : 0}" data-di="${S.dlgIndent ? 1 : 0}" data-frame="${curTheme().frame ? 1 : 0}" data-sx="${S.sx === 100 ? 0 : 1}" data-sxd="${dv('sx') === 100 ? 0 : 1}" data-av="${S.avatars ? 1 : 0}" data-cf="${S.cFrame ? 1 : 0}" data-ca="${S.cAlign}" data-pad="${S.padOwn ? 1 : 0}" data-sp="${S.spoil}" data-hr="${S.hr}" data-tm="${S.times && kindOf() === 'bubble' ? 1 : 0}" style="${esc(sheetVars(extra))}"`;
 const hasContent = () => blocks.some(b => (b.type === 'text' && b.text.trim()) || (b.type === 'img' && b.src));
 /* the flow as its pieces: head, the rows of the list, foot. The paged preview puts only the rows a page shows on that page. */
 function flowParts(){
